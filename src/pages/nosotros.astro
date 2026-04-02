@@ -1,0 +1,197 @@
+---
+// src/pages/nosotros.astro
+import Layout from '../layouts/Layout.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+---
+
+<Layout
+  title="Nosotros · InmoPremium"
+  description="Conoce al equipo de InmoPremium, corredora de propiedades con años de experiencia en venta y arriendo en Chile."
+>
+
+  <Breadcrumb
+    title="Nosotros"
+    subtitle="Conoce quiénes somos y nuestra historia en el mercado inmobiliario chileno."
+    items={[]}
+  />
+
+  <section class="section">
+    <div class="container">
+
+      <!-- Historia -->
+      <div class="about-grid">
+        <div class="about-text">
+          <span class="section-tag">Nuestra historia</span>
+          <h2>Más de 10 años conectando personas con su hogar ideal</h2>
+          <p>
+            InmoPremium nació con una misión clara: hacer del proceso de compra, venta y arriendo de propiedades una experiencia transparente, ágil y personalizada. Desde nuestros inicios, hemos acompañado a cientos de familias y empresas a encontrar el espacio que necesitaban.
+          </p>
+          <p>
+            Trabajamos con un enfoque moderno, usando tecnología de punta para mostrar cada propiedad de la mejor manera posible, combinado con el trato humano y cercano que nos distingue.
+          </p>
+        </div>
+        <div class="about-stats">
+          <div class="stat">
+            <div class="stat-num">+500</div>
+            <div class="stat-label">Propiedades gestionadas</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">+10</div>
+            <div class="stat-label">Años de experiencia</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">98%</div>
+            <div class="stat-label">Clientes satisfechos</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">16</div>
+            <div class="stat-label">Regiones atendidas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Valores -->
+      <div class="valores-section">
+        <span class="section-tag">Nuestros valores</span>
+        <h2>Lo que nos define</h2>
+        <div class="valores-grid">
+          {[
+            { icon: '◈', titulo: 'Transparencia', desc: 'Información clara y honesta en cada etapa del proceso, sin letra chica.' },
+            { icon: '◎', titulo: 'Profesionalismo', desc: 'Corredores certificados con profundo conocimiento del mercado chileno.' },
+            { icon: '◉', titulo: 'Tecnología', desc: 'Sitio web moderno, galería de fotos profesional y gestión digital de propiedades.' },
+            { icon: '◆', titulo: 'Compromiso', desc: 'Acompañamiento real desde el primer contacto hasta la firma del contrato.' },
+          ].map(v => (
+            <div class="valor-card">
+              <div class="valor-icon">{v.icon}</div>
+              <h3>{v.titulo}</h3>
+              <p>{v.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="about-cta">
+        <h2>¿Tienes una propiedad para vender o arrendar?</h2>
+        <p>Contáctanos y nuestro equipo te asesorará sin compromiso.</p>
+        <div class="cta-btns">
+          <a href="/contacto" class="btn-primary">Contactar ahora</a>
+          <a href="/propiedades" class="btn-secondary">Ver propiedades</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+.section { padding: 4rem 0 6rem; background: #F5F0E8; }
+.container { max-width: 1280px; margin: 0 auto; padding: 0 3rem; }
+
+/* About grid */
+.about-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 5rem; align-items: center;
+  margin-bottom: 5rem;
+}
+.section-tag {
+  display: inline-block;
+  font-size: .72rem; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: #C6A55C;
+  margin-bottom: 1rem;
+}
+.about-text h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  color: #1A1A1A; margin-bottom: 1.2rem; line-height: 1.25;
+}
+.about-text p {
+  font-size: .95rem; color: #5A5A5A; line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+/* Stats */
+.about-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+}
+.stat {
+  background: #fff; padding: 2rem 1.5rem;
+  border: 1px solid rgba(26,26,26,.08);
+  border-bottom: 3px solid #C6A55C;
+  text-align: center;
+  transition: transform .2s;
+}
+.stat:hover { transform: translateY(-3px); }
+.stat-num {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2.2rem; font-weight: 700; color: #1A1A1A;
+  margin-bottom: .3rem;
+}
+.stat-label { font-size: .8rem; color: #6B6B6B; }
+
+/* Valores */
+.valores-section { margin-bottom: 5rem; }
+.valores-section h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  color: #1A1A1A; margin-bottom: 2.5rem;
+}
+.valores-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;
+}
+.valor-card {
+  background: #fff; padding: 2rem 1.5rem;
+  border: 1px solid rgba(26,26,26,.08);
+  transition: all .25s;
+}
+.valor-card:hover {
+  border-color: #C6A55C;
+  box-shadow: 0 8px 24px rgba(26,26,26,.08);
+}
+.valor-icon {
+  font-size: 1.5rem; color: #C6A55C;
+  margin-bottom: 1rem;
+}
+.valor-card h3 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.1rem; color: #1A1A1A; margin-bottom: .6rem;
+}
+.valor-card p { font-size: .85rem; color: #6B6B6B; line-height: 1.7; }
+
+/* CTA */
+.about-cta {
+  background: #1A1A1A; padding: 4rem;
+  text-align: center;
+}
+.about-cta h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  color: #F5F0E8; margin-bottom: .8rem;
+}
+.about-cta p { color: rgba(245,240,232,.45); margin-bottom: 2rem; }
+.cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.btn-primary {
+  background: #C6A55C; color: #1A1A1A;
+  padding: .85rem 2.2rem; font-size: .88rem; font-weight: 700;
+  text-decoration: none; transition: all .2s; letter-spacing: .04em;
+}
+.btn-primary:hover { background: #F5F0E8; }
+.btn-secondary {
+  background: transparent; color: #F5F0E8;
+  border: 1px solid rgba(245,240,232,.25);
+  padding: .85rem 2.2rem; font-size: .88rem; font-weight: 500;
+  text-decoration: none; transition: all .2s;
+}
+.btn-secondary:hover { border-color: #C6A55C; color: #C6A55C; }
+
+@media (max-width: 1024px) {
+  .container { padding: 0 1.5rem; }
+  .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .valores-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .valores-grid { grid-template-columns: 1fr; }
+  .about-cta { padding: 2.5rem 1.5rem; }
+}
+</style>

@@ -1,0 +1,462 @@
+---
+// src/pages/agregar-propiedad.astro
+import Layout from '../layouts/Layout.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+---
+
+<Layout
+  title="Agregar Propiedad · InmoPremium"
+  description="Publica tu propiedad en InmoPremium. Completa el formulario y la revisamos en menos de 24 horas."
+>
+
+  <Breadcrumb
+    title="Agregar Propiedad"
+    subtitle="Completa el formulario y revisaremos tu propiedad en menos de 24 horas."
+    items={[]}
+  />
+
+  <section class="section">
+    <div class="container">
+
+      <!-- Info aviso -->
+      <div class="aviso">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p>Tu propiedad quedará en revisión. Una vez aprobada será publicada en el sitio. Máximo <strong>5 fotos</strong> de hasta <strong>3MB</strong> cada una.</p>
+      </div>
+
+      <!-- Formulario -->
+      <form id="form-propiedad" class="form" enctype="multipart/form-data" novalidate>
+
+        <!-- SECCIÓN 1: Datos principales -->
+        <div class="form-section">
+          <h2 class="form-section-title">
+            <span class="form-step">01</span>
+            Datos de la propiedad
+          </h2>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label for="titulo">Título de la propiedad *</label>
+              <input type="text" id="titulo" name="titulo" placeholder="Ej: Casa moderna con jardín, Sector Norte Temuco" required />
+            </div>
+            <div class="form-group">
+              <label for="tipo_operacion">Tipo de operación *</label>
+              <select id="tipo_operacion" name="tipo_operacion" required>
+                <option value="">Seleccionar</option>
+                <option value="venta">Venta</option>
+                <option value="arriendo">Arriendo</option>
+                <option value="arriendo_temp">Arriendo Temporal</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="tipo_propiedad">Tipo de propiedad *</label>
+              <select id="tipo_propiedad" name="tipo_propiedad" required>
+                <option value="">Seleccionar</option>
+                <option value="casa">Casa</option>
+                <option value="departamento">Departamento</option>
+                <option value="terreno">Terreno</option>
+                <option value="oficina">Oficina</option>
+                <option value="local_comercial">Local Comercial</option>
+                <option value="parcela">Parcela / Campo</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="precio_uf">Precio en UF *</label>
+              <input type="number" id="precio_uf" name="precio_uf" placeholder="4800" min="1" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label for="metros_construidos">Metros construidos (m²) *</label>
+              <input type="number" id="metros_construidos" name="metros_construidos" placeholder="120" min="1" step="0.01" required />
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 2: Características -->
+        <div class="form-section">
+          <h2 class="form-section-title">
+            <span class="form-step">02</span>
+            Características
+          </h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="dormitorios">Dormitorios</label>
+              <input type="number" id="dormitorios" name="dormitorios" placeholder="3" min="0" max="20" step="1" />
+            </div>
+            <div class="form-group">
+              <label for="banos">Baños</label>
+              <input type="number" id="banos" name="banos" placeholder="2" min="0" step="1" />
+            </div>
+            <div class="form-group">
+              <label for="estacionamientos">Estacionamientos</label>
+              <input type="number" id="estacionamientos" name="estacionamientos" placeholder="1" min="0" step="1" />
+            </div>
+            <div class="form-group full">
+              <label for="descripcion">Descripción</label>
+              <textarea id="descripcion" name="descripcion" rows={4} placeholder="Describe la propiedad: características, entorno, estado de conservación..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 3: Ubicación -->
+        <div class="form-section">
+          <h2 class="form-section-title">
+            <span class="form-step">03</span>
+            Ubicación
+          </h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="ciudad">Ciudad / Comuna *</label>
+              <input type="text" id="ciudad" name="ciudad" placeholder="Ej: Temuco" required />
+            </div>
+            <div class="form-group">
+              <label for="sector">Sector / Barrio</label>
+              <input type="text" id="sector" name="sector" placeholder="Ej: Sector Norte" />
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 4: Fotos -->
+        <div class="form-section">
+          <h2 class="form-section-title">
+            <span class="form-step">04</span>
+            Fotos de la propiedad
+          </h2>
+          <div class="upload-area" id="upload-area">
+            <input type="file" id="fotos" name="fotos" multiple accept="image/jpeg,image/png,image/webp" class="upload-input" />
+            <div class="upload-placeholder" id="upload-placeholder">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <p>Arrastra tus fotos aquí o <span>haz clic para seleccionar</span></p>
+              <small>Máximo 5 fotos · JPG, PNG o WebP · Hasta 3MB cada una</small>
+            </div>
+            <div class="fotos-preview" id="fotos-preview"></div>
+          </div>
+          <p class="upload-note" id="upload-count"></p>
+        </div>
+
+        <!-- SECCIÓN 5: Corredor -->
+        <div class="form-section">
+          <h2 class="form-section-title">
+            <span class="form-step">05</span>
+            Datos del corredor
+          </h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="corredor_nombre">Nombre completo *</label>
+              <input type="text" id="corredor_nombre" name="corredor_nombre" placeholder="María González" required />
+            </div>
+            <div class="form-group">
+              <label for="corredor_telefono">Teléfono / WhatsApp *</label>
+              <input type="tel" id="corredor_telefono" name="corredor_telefono" placeholder="+56 9 1234 5678" required />
+            </div>
+            <div class="form-group">
+              <label for="corredor_email">Email</label>
+              <input type="email" id="corredor_email" name="corredor_email" placeholder="corredor@email.cl" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón enviar -->
+        <div class="form-footer">
+          <button type="submit" class="btn-submit" id="btn-submit">
+            <span id="btn-text">Enviar propiedad para revisión</span>
+            <span id="btn-loading" class="hidden">Enviando...</span>
+          </button>
+          <p class="form-legal">Al enviar confirmas que la información es verídica y autorizas su publicación en InmoPremium.</p>
+        </div>
+
+      </form>
+
+      <!-- Mensaje de éxito -->
+      <div id="mensaje-exito" class="mensaje-exito hidden">
+        <div class="exito-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2>¡Propiedad enviada con éxito!</h2>
+        <p>Revisaremos tu publicación y la aprobaremos en menos de 24 horas. Te contactaremos al número que indicaste.</p>
+        <a href="/propiedades" class="btn-volver">Ver propiedades publicadas</a>
+      </div>
+
+      <!-- Mensaje de error -->
+      <div id="mensaje-error" class="mensaje-error hidden">
+        <p id="error-texto"></p>
+      </div>
+
+    </div>
+  </section>
+
+</Layout>
+
+<script>
+  const form        = document.getElementById('form-propiedad') as HTMLFormElement;
+  const btnSubmit   = document.getElementById('btn-submit') as HTMLButtonElement;
+  const btnText     = document.getElementById('btn-text');
+  const btnLoading  = document.getElementById('btn-loading');
+  const msgExito    = document.getElementById('mensaje-exito');
+  const msgError    = document.getElementById('mensaje-error');
+  const errorTexto  = document.getElementById('error-texto');
+  const uploadInput = document.getElementById('fotos') as HTMLInputElement;
+  const uploadArea  = document.getElementById('upload-area');
+  const preview     = document.getElementById('fotos-preview');
+  const countEl     = document.getElementById('upload-count');
+  const placeholder = document.getElementById('upload-placeholder');
+
+  const MAX_FOTOS = 5;
+  const MAX_MB    = 3;
+
+  // ── Preview de fotos ──────────────────────────
+  function actualizarPreview(files: FileList) {
+    if (!preview || !countEl || !placeholder) return;
+    preview.innerHTML = '';
+
+    const arr = Array.from(files);
+    if (arr.length > 0) placeholder?.classList.add('hidden');
+    else placeholder?.classList.remove('hidden');
+
+    arr.slice(0, MAX_FOTOS).forEach((file, i) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const div = document.createElement('div');
+        div.className = 'foto-thumb';
+        div.innerHTML = `
+          <img src="${e.target?.result}" alt="Foto ${i+1}" />
+          <span class="foto-num">${i+1}</span>
+        `;
+        preview.appendChild(div);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    countEl.textContent = arr.length > 0
+      ? `${Math.min(arr.length, MAX_FOTOS)} foto${arr.length !== 1 ? 's' : ''} seleccionada${arr.length !== 1 ? 's' : ''}`
+      : '';
+  }
+
+  uploadInput?.addEventListener('change', () => {
+    if (uploadInput.files) actualizarPreview(uploadInput.files);
+  });
+
+  // Drag & drop
+  uploadArea?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag-over');
+  });
+  uploadArea?.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+  uploadArea?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    const dt = e.dataTransfer;
+    if (dt?.files && uploadInput) {
+      uploadInput.files = dt.files;
+      actualizarPreview(dt.files);
+    }
+  });
+
+  // ── Envío del formulario ──────────────────────
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
+    // Validar fotos
+    const files = uploadInput?.files ? Array.from(uploadInput.files) : [];
+    if (files.length > MAX_FOTOS) {
+      mostrarError(`Máximo ${MAX_FOTOS} fotos permitidas.`); return;
+    }
+    for (const f of files) {
+      if (f.size > MAX_MB * 1024 * 1024) {
+        mostrarError(`La foto "${f.name}" supera los ${MAX_MB}MB.`); return;
+      }
+    }
+
+    // Loading state
+    btnSubmit.disabled = true;
+    btnText?.classList.add('hidden');
+    btnLoading?.classList.remove('hidden');
+    msgError?.classList.add('hidden');
+
+    try {
+      const fd = new FormData(form);
+      const res = await fetch('/api/crear-propiedad', { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (data.ok) {
+        form.classList.add('hidden');
+        msgExito?.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        mostrarError(data.error || 'Error al enviar. Intenta nuevamente.');
+        btnSubmit.disabled = false;
+        btnText?.classList.remove('hidden');
+        btnLoading?.classList.add('hidden');
+      }
+    } catch {
+      mostrarError('Error de conexión. Verifica tu internet e intenta nuevamente.');
+      btnSubmit.disabled = false;
+      btnText?.classList.remove('hidden');
+      btnLoading?.classList.add('hidden');
+    }
+  });
+
+  function mostrarError(msg: string) {
+    if (errorTexto) errorTexto.textContent = msg;
+    msgError?.classList.remove('hidden');
+    msgError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+</script>
+
+<style>
+.section { padding: 3rem 0 6rem; background: #F5F0E8; }
+.container { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
+
+/* Aviso */
+.aviso {
+  display: flex; align-items: flex-start; gap: .75rem;
+  background: #EDE8E2; border-left: 3px solid #C6A55C;
+  padding: 1rem 1.2rem; margin-bottom: 2.5rem;
+  font-size: .88rem; color: #374151;
+}
+.aviso svg { flex-shrink: 0; color: #C6A55C; margin-top: .1rem; }
+.aviso p { line-height: 1.6; }
+
+/* Form sections */
+.form-section {
+  background: #fff; border: 1px solid rgba(26,26,26,.08);
+  padding: 2rem; margin-bottom: 1.5rem;
+}
+.form-section-title {
+  display: flex; align-items: center; gap: 1rem;
+  font-size: 1rem; font-weight: 700; color: #111827;
+  margin-bottom: 1.5rem; padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(26,26,26,.07);
+}
+.form-step {
+  width: 32px; height: 32px; flex-shrink: 0;
+  background: #111827; color: #F5F0E8;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .78rem; font-weight: 700;
+}
+
+/* Form grid */
+.form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem;
+}
+.form-group { display: flex; flex-direction: column; gap: .4rem; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label {
+  font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: #374151;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: .75rem 1rem;
+  border: 1px solid rgba(26,26,26,.15);
+  background: #FAFAF8;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .92rem; color: #111827; outline: none;
+  transition: border-color .2s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: #C6A55C; background: #fff; }
+.form-group textarea { resize: vertical; }
+
+/* Upload area */
+.upload-area {
+  border: 2px dashed rgba(26,26,26,.2);
+  background: #FAFAF8; cursor: pointer;
+  transition: all .2s; position: relative;
+  min-height: 140px;
+}
+.upload-area:hover, .upload-area.drag-over {
+  border-color: #C6A55C; background: #F5F0E8;
+}
+.upload-input {
+  position: absolute; inset: 0;
+  opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.upload-placeholder {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 2.5rem;
+  text-align: center; color: #9CA3AF;
+  gap: .75rem;
+}
+.upload-placeholder p { font-size: .92rem; color: #6B7280; }
+.upload-placeholder span { color: #C6A55C; font-weight: 600; }
+.upload-placeholder small { font-size: .75rem; }
+.upload-placeholder.hidden { display: none; }
+
+.fotos-preview {
+  display: flex; flex-wrap: wrap; gap: .75rem;
+  padding: 1rem;
+}
+.foto-thumb {
+  position: relative; width: 100px; height: 80px; overflow: hidden;
+}
+.foto-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.foto-num {
+  position: absolute; top: .3rem; left: .3rem;
+  background: #C6A55C; color: #fff;
+  font-size: .65rem; font-weight: 700;
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+}
+.upload-note {
+  font-size: .78rem; color: #6B7280; margin-top: .5rem;
+}
+
+/* Footer del form */
+.form-footer { text-align: center; padding-top: 1rem; }
+.btn-submit {
+  background: #111827; color: #F5F0E8;
+  padding: 1rem 3rem; font-size: .95rem; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  border: none; cursor: pointer; transition: all .2s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  width: 100%; max-width: 400px;
+}
+.btn-submit:hover:not(:disabled) { background: #C6A55C; color: #1A1A1A; }
+.btn-submit:disabled { opacity: .6; cursor: not-allowed; }
+.form-legal {
+  font-size: .75rem; color: #9CA3AF; margin-top: 1rem; line-height: 1.6;
+}
+
+/* Mensajes */
+.hidden { display: none !important; }
+
+.mensaje-exito {
+  text-align: center; padding: 4rem 2rem;
+  background: #fff; border: 1px solid rgba(26,26,26,.08);
+}
+.exito-icon {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: #C6A55C; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+.mensaje-exito h2 {
+  font-size: 1.5rem; color: #111827; margin-bottom: .75rem;
+}
+.mensaje-exito p {
+  color: #6B7280; max-width: 480px;
+  margin: 0 auto 2rem; line-height: 1.7;
+}
+.btn-volver {
+  display: inline-block; background: #111827; color: #F5F0E8;
+  padding: .85rem 2.5rem; font-size: .88rem; font-weight: 600;
+  text-decoration: none; transition: background .2s;
+}
+.btn-volver:hover { background: #C6A55C; color: #1A1A1A; }
+
+.mensaje-error {
+  background: #FEF2F2; border: 1px solid #FECACA;
+  border-left: 3px solid #EF4444;
+  padding: 1rem 1.2rem; margin-top: 1rem;
+  font-size: .88rem; color: #DC2626;
+}
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-section { padding: 1.5rem; }
+}
+</style>

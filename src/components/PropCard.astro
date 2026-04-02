@@ -1,0 +1,123 @@
+---
+// src/components/PropCard.astro
+import { formatUF, whatsappLink } from '../lib/wp-api.js';
+
+const { prop } = Astro.props;
+const acf = prop.acf ?? {};
+const titulo = prop.title?.rendered ?? 'Propiedad';
+const imagen = acf.imagen_principal?.url ?? prop.thumbnail_url ?? 'https://placehold.co/600x400/1C1C1E/B87333?text=Sin+foto';
+const precio = acf.tipo_operacion === 'arriendo'
+  ? `${formatUF(acf.precio_arriendo_uf)}/mes`
+  : formatUF(acf.precio_uf);
+---
+
+<article class="prop-card">
+  <a href={`/propiedades/${prop.slug}`} class="prop-img-link">
+    <div class="prop-img">
+      <img src={imagen} alt={titulo} loading="lazy" />
+      <span class={`prop-badge ${acf.tipo_operacion}`}>
+        {acf.tipo_operacion === 'venta' ? 'En Venta' : 'Arriendo'}
+      </span>
+    </div>
+  </a>
+
+  <div class="prop-body">
+    <div class="prop-precio">{precio}</div>
+    <h3 class="prop-titulo">
+      <a href={`/propiedades/${prop.slug}`}>{titulo}</a>
+    </h3>
+    <p class="prop-ubicacion">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      {acf.sector ? `${acf.sector}, ` : ''}{acf.ciudad}
+    </p>
+
+    <div class="prop-specs">
+      {acf.dormitorios > 0 && <span class="spec">{acf.dormitorios} dorm.</span>}
+      {acf.banos > 0 && <span class="spec">{acf.banos} baños</span>}
+      {acf.metros_construidos > 0 && <span class="spec">{acf.metros_construidos} m²</span>}
+      {acf.estacionamientos > 0 && <span class="spec">{acf.estacionamientos} est.</span>}
+    </div>
+
+    <div class="prop-footer">
+      <a href={`/propiedades/${prop.slug}`} class="btn-ver">Ver ficha</a>
+      {acf.corredor_telefono && (
+        <a href={whatsappLink(acf.corredor_telefono, titulo)} target="_blank" rel="noopener" class="btn-wp">
+          WhatsApp
+        </a>
+      )}
+    </div>
+  </div>
+</article>
+
+<style>
+.prop-card {
+  background: #fff;
+  border: 1px solid #E8E3DD;
+  transition: transform .3s, box-shadow .3s;
+  overflow: hidden;
+}
+.prop-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 35px rgba(28,28,30,.1);
+  border-color: #B87333;
+}
+.prop-img-link { display: block; }
+.prop-img {
+  position: relative; aspect-ratio: 4/3; overflow: hidden;
+}
+.prop-img img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform .5s;
+}
+.prop-card:hover .prop-img img { transform: scale(1.04); }
+
+.prop-badge {
+  position: absolute; top: .8rem; left: .8rem;
+  padding: .3rem .75rem;
+  font-size: .68rem; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase;
+}
+.prop-badge.venta    { background: #B87333; color: #fff; }
+.prop-badge.arriendo { background: #1C1C1E; color: #F2EDE8; }
+.prop-badge.arriendo_temp { background: #4A6741; color: #fff; }
+
+.prop-body { padding: 1.3rem; }
+.prop-precio {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.25rem; font-weight: 700; color: #1C1C1E;
+  margin-bottom: .3rem;
+}
+.prop-titulo {
+  font-size: .95rem; font-weight: 500;
+  margin-bottom: .35rem; line-height: 1.4;
+}
+.prop-titulo a { color: #1C1C1E; text-decoration: none; }
+.prop-titulo a:hover { color: #B87333; }
+
+.prop-ubicacion {
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .78rem; color: #7A7269; margin-bottom: 1rem;
+}
+.prop-ubicacion svg { flex-shrink: 0; opacity: .6; }
+
+.prop-specs {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  padding: .9rem 0; border-top: 1px solid #EDE8E2;
+  margin-bottom: .9rem;
+}
+.spec {
+  font-size: .75rem; color: #7A7269;
+  background: #F5F2EE; padding: .25rem .6rem;
+}
+
+.prop-footer { display: flex; gap: .6rem; }
+.btn-ver, .btn-wp {
+  flex: 1; text-align: center;
+  padding: .6rem .5rem; font-size: .78rem; font-weight: 600;
+  text-decoration: none; transition: all .2s; letter-spacing: .03em;
+}
+.btn-ver { background: #1C1C1E; color: #F2EDE8; }
+.btn-ver:hover { background: #B87333; }
+.btn-wp { border: 1px solid #D9D2C8; color: #1C1C1E; }
+.btn-wp:hover { border-color: #25D366; background: #25D366; color: #fff; }
+</style>

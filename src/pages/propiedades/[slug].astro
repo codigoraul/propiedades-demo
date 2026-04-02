@@ -1,0 +1,645 @@
+---
+// src/pages/propiedades/[slug].astro
+import Layout from '../../layouts/Layout.astro';
+import { getPropiedades, getPropiedadBySlug, formatUF, formatPesos, whatsappLink } from '../../lib/wp-api.js';
+
+export async function getStaticPaths() {
+  const propiedades = await getPropiedades({ per_page: 100 });
+  return propiedades.map(p => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const prop = await getPropiedadBySlug(slug);
+
+if (!prop) return Astro.redirect('/propiedades');
+
+const acf    = prop.acf ?? {};
+const titulo = prop.title?.rendered ?? 'Propiedad';
+const imagen = acf.imagen_principal?.url ?? prop.thumbnail_url;
+const galeria = Array.isArray(acf.galeria) ? acf.galeria : [];
+
+// Construimos array unificado: imagen principal + galería
+const todasLasImagenes = [
+  ...(imagen ? [{ url: imagen, alt: titulo }] : []),
+  ...galeria.map(img => ({ url: img.url, alt: img.alt ?? titulo })),
+];
+
+const precio = acf.tipo_operacion === 'arriendo'
+  ? `${formatUF(acf.precio_arriendo_uf)}/mes`
+  : formatUF(acf.precio_uf);
+
+const amenidades = acf.amenidades ?? [];
+const amenidadesLabels = {
+  piscina: '🏊 Piscina', jardin: '🌿 Jardín', terraza: '🌅 Terraza',
+  bodega: '📦 Bodega', quincho: '🔥 Quincho', calefaccion: '🌡 Calefacción',
+  aire_acond: '❄️ Aire acond.', domotica: '🤖 Domótica', seguridad: '🔒 Seguridad',
+  portero: '🏢 Portería', gym: '💪 Gimnasio', sala_eventos: '🎉 Sala eventos',
+  mascotas: '🐾 Mascotas OK', amoblado: '🛋 Amoblado',
+};
+const getAmenidadLabel = (key) => amenidadesLabels[key] ?? key;
+
+const wpLink = acf.corredor_telefono
+  ? whatsappLink(acf.corredor_telefono, `${titulo} — ${acf.ciudad}`)
+  : '#';
+
+// Serializar imágenes para el script del cliente
+const imagenesJSON = JSON.stringify(todasLasImagenes);
+---
+
+<Layout title={titulo} description={acf.descripcion_larga ?? `Propiedad en ${acf.ciudad}`}>
+
+  <!-- BREADCRUMB -->
+  <nav class="breadcrumb" aria-label="Navegación">
+    <a href="/">Inicio</a> /
+    <a href="/propiedades">Propiedades</a> /
+    <span>{titulo}</span>
+  </nav>
+
+  <div class="detalle-wrapper">
+
+    <!-- COLUMNA IZQUIERDA -->
+    <div class="detalle-main">
+
+      <!-- ═══ GALERÍA ═══ -->
+      <div class="galeria">
+
+        <!-- Imagen principal — abre lightbox en índice 0 -->
+        <div class="img-principal">
+          {imagen
+            ? <img
+                src={imagen}
+                alt={titulo}
+                class="img-principal-foto cursor-zoom"
+                data-index="0"
+              />
+            : <div class="img-placeholder">Sin fotografía</div>
+          }
+          <span class={`badge ${acf.tipo_operacion}`}>
+            {acf.tipo_operacion === 'venta' ? 'En Venta' : 'Arriendo'}
+          </span>
+          {todasLasImagenes.length > 1 && (
+            <button class="btn-ver-todas" data-index="0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+              </svg>
+              Ver todas las fotos ({todasLasImagenes.length})
+            </button>
+          )}
+        </div>
+
+        <!-- Thumbnails — máx 4 visibles, el último muestra "+N fotos" -->
+        {todasLasImagenes.length > 1 && (
+          <div class="img-thumbs">
+            {todasLasImagenes.slice(1, 5).map((img, i) => {
+              const realIndex = i + 1; // índice real en todasLasImagenes
+              const esUltimo  = i === 3 && todasLasImagenes.length > 5;
+              return (
+                <button
+                  class="thumb-btn"
+                  data-index={realIndex}
+                  aria-label={`Ver foto ${realIndex + 1}`}
+                >
+                  <img src={img.url} alt={img.alt} loading="lazy" />
+                  {esUltimo && (
+                    <div class="thumb-overlay">
+                      +{todasLasImagenes.length - 5} fotos
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <!-- /galería -->
+
+      <!-- Descripción -->
+      <div class="descripcion">
+        <h2>Descripción</h2>
+        {acf.descripcion_larga
+          ? <p set:html={acf.descripcion_larga.replace(/\n/g, '<br>')} />
+          : prop.excerpt?.rendered
+            ? <div set:html={prop.excerpt.rendered} />
+            : <p style="color:#6B6B6B">El corredor no ha ingresado descripción aún.</p>
+        }
+      </div>
+
+      <!-- Amenidades -->
+      {amenidades.length > 0 && (
+        <div class="amenidades-section">
+          <h2>Características incluidas</h2>
+          <div class="amenidades-grid">
+            {amenidades.map(key => (
+              <span class="amenidad">{getAmenidadLabel(key)}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- Video tour -->
+      {acf.video_url && (
+        <div class="video-section">
+          <h2>Video Tour</h2>
+          <a href={acf.video_url} target="_blank" class="video-link">
+            ▶ Ver video tour en YouTube
+          </a>
+        </div>
+      )}
+    </div>
+
+    <!-- COLUMNA DERECHA: aside -->
+    <aside class="detalle-aside">
+
+      <div class="aside-card">
+        <div class="aside-precio">{precio}</div>
+        {acf.precio_pesos && (
+          <div class="aside-precio-pesos">≈ {formatPesos(acf.precio_pesos)}</div>
+        )}
+        {acf.codigo_interno && (
+          <div class="aside-codigo">Código: {acf.codigo_interno}</div>
+        )}
+      </div>
+
+      <div class="aside-card">
+        <h3>Especificaciones</h3>
+        <dl class="specs-dl">
+          <div class="spec-row"><dt>Tipo</dt><dd>{acf.tipo_propiedad?.replace('_', ' ')}</dd></div>
+          <div class="spec-row"><dt>Operación</dt><dd>{acf.tipo_operacion}</dd></div>
+          {acf.metros_construidos > 0 && <div class="spec-row"><dt>Construidos</dt><dd>{acf.metros_construidos} m²</dd></div>}
+          {acf.metros_terreno > 0    && <div class="spec-row"><dt>Terreno</dt><dd>{acf.metros_terreno} m²</dd></div>}
+          {acf.dormitorios > 0       && <div class="spec-row"><dt>Dormitorios</dt><dd>{acf.dormitorios}</dd></div>}
+          {acf.banos > 0             && <div class="spec-row"><dt>Baños</dt><dd>{acf.banos}</dd></div>}
+          {acf.estacionamientos > 0  && <div class="spec-row"><dt>Estacionamientos</dt><dd>{acf.estacionamientos}</dd></div>}
+          {acf.piso                  && <div class="spec-row"><dt>Piso</dt><dd>{acf.piso}°</dd></div>}
+          {acf.antiguedad            && <div class="spec-row"><dt>Antigüedad</dt><dd>{acf.antiguedad.replace('_', ' ')}</dd></div>}
+        </dl>
+      </div>
+
+      <div class="aside-card">
+        <h3>Ubicación</h3>
+        <p class="ubicacion-txt">📍 {[acf.sector, acf.ciudad, acf.region].filter(Boolean).join(', ')}</p>
+        {acf.direccion && <p class="ubicacion-dir">{acf.direccion}</p>}
+      </div>
+
+      {acf.corredor_nombre && (
+        <div class="aside-card corredor-card">
+          <h3>Corredor a cargo</h3>
+          <div class="corredor-info">
+            <div class="corredor-avatar">
+              {acf.corredor_foto?.url
+                ? <img src={acf.corredor_foto.url} alt={acf.corredor_nombre} />
+                : <span>{acf.corredor_nombre.charAt(0)}</span>
+              }
+            </div>
+            <div>
+              <div class="corredor-nombre">{acf.corredor_nombre}</div>
+              <div class="corredor-tel">{acf.corredor_telefono}</div>
+            </div>
+          </div>
+          <a href={wpLink} target="_blank" rel="noopener" class="btn-wp-grande">
+            💬 Contactar por WhatsApp
+          </a>
+          {acf.corredor_email && (
+            <a href={`mailto:${acf.corredor_email}`} class="btn-email">
+              📧 Enviar correo
+            </a>
+          )}
+        </div>
+      )}
+    </aside>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       LIGHTBOX
+  ════════════════════════════════════════════ -->
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Galería de fotos" hidden>
+    <!-- Fondo oscuro -->
+    <div class="lb-backdrop"></div>
+
+    <!-- Contenedor principal -->
+    <div class="lb-container">
+
+      <!-- Header: contador + cerrar -->
+      <div class="lb-header">
+        <span class="lb-counter"><span id="lb-current">1</span> / <span id="lb-total">{todasLasImagenes.length}</span></span>
+        <button class="lb-close" aria-label="Cerrar galería">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Imagen activa -->
+      <div class="lb-stage">
+        <button class="lb-arrow lb-prev" aria-label="Foto anterior">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+
+        <div class="lb-img-wrap">
+          <img id="lb-img" src="" alt="" />
+          <div class="lb-spinner"></div>
+        </div>
+
+        <button class="lb-arrow lb-next" aria-label="Foto siguiente">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Tira de thumbnails -->
+      <div class="lb-strip" id="lb-strip">
+        {todasLasImagenes.map((img, i) => (
+          <button class="lb-strip-thumb" data-lb-index={i} aria-label={`Ir a foto ${i + 1}`}>
+            <img src={img.url} alt={img.alt} loading="lazy" />
+          </button>
+        ))}
+      </div>
+
+    </div>
+  </div>
+
+</Layout>
+
+<!-- ═══════════════════════════════════════════
+     SCRIPT — Lightbox + Carrusel
+════════════════════════════════════════════ -->
+<script define:vars={{ imagenesJSON }}>
+  const IMAGENES = JSON.parse(imagenesJSON);
+  const lightbox  = document.getElementById('lightbox');
+  const lbImg     = document.getElementById('lb-img');
+  const lbCurrent = document.getElementById('lb-current');
+  const lbStrip   = document.getElementById('lb-strip');
+  const thumbBtns = lbStrip?.querySelectorAll('.lb-strip-thumb') ?? [];
+
+  let current = 0;
+
+  // ── Abrir ──────────────────────────────────
+  function openLightbox(index) {
+    current = Math.max(0, Math.min(index, IMAGENES.length - 1));
+    lightbox.hidden = false;
+    document.body.style.overflow = 'hidden';
+    renderImage(current);
+    lightbox.focus();
+  }
+
+  // ── Cerrar ─────────────────────────────────
+  function closeLightbox() {
+    lightbox.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  // ── Navegar ────────────────────────────────
+  function goTo(index) {
+    current = (index + IMAGENES.length) % IMAGENES.length;
+    renderImage(current);
+  }
+  function prev() { goTo(current - 1); }
+  function next() { goTo(current + 1); }
+
+  // ── Renderizar imagen activa ───────────────
+  function renderImage(index) {
+    if (!IMAGENES[index]) return;
+    const { url, alt } = IMAGENES[index];
+
+    // Spinner mientras carga
+    lbImg.style.opacity = '0';
+    const newImg = new Image();
+    newImg.onload = () => {
+      lbImg.src = url;
+      lbImg.alt = alt;
+      lbImg.style.opacity = '1';
+    };
+    newImg.src = url;
+
+    // Contador
+    lbCurrent.textContent = index + 1;
+
+    // Thumbnails activos
+    thumbBtns.forEach((btn, i) => {
+      btn.classList.toggle('active', i === index);
+    });
+
+    // Scroll del strip al thumb activo
+    const activeThumb = lbStrip?.querySelector(`[data-lb-index="${index}"]`);
+    if (activeThumb) {
+      activeThumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }
+
+  // ── Disparadores: botón "Ver todas" e imagen principal ──
+  document.querySelectorAll('[data-index]').forEach(el => {
+    el.addEventListener('click', () => openLightbox(Number(el.dataset.index)));
+  });
+
+  // ── Disparadores: thumbnails de la galería ──
+  document.querySelectorAll('.thumb-btn').forEach(btn => {
+    btn.addEventListener('click', () => openLightbox(Number(btn.dataset.index)));
+  });
+
+  // ── Controles del lightbox ────────────────
+  document.querySelector('.lb-close')?.addEventListener('click', closeLightbox);
+  document.querySelector('.lb-prev')?.addEventListener('click', prev);
+  document.querySelector('.lb-next')?.addEventListener('click', next);
+  document.querySelector('.lb-backdrop')?.addEventListener('click', closeLightbox);
+
+  // Clicks en strip de thumbnails
+  thumbBtns.forEach(btn => {
+    btn.addEventListener('click', () => goTo(Number(btn.dataset.lbIndex)));
+  });
+
+  // ── Teclado ───────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (lightbox.hidden) return;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   { e.preventDefault(); prev(); }
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  // ── Swipe touch ───────────────────────────
+  let touchStartX = 0;
+  lightbox.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  lightbox.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) diff > 0 ? next() : prev();
+  });
+</script>
+
+<style>
+/* ── General ───────────────────────────────── */
+.breadcrumb {
+  padding: 7rem 5rem 1rem;
+  font-size: .8rem; color: #6B6B6B;
+}
+.breadcrumb a { color: #6B6B6B; text-decoration: none; }
+.breadcrumb a:hover { color: #C9A84C; }
+
+.detalle-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 3rem;
+  padding: 1.5rem 5rem 5rem;
+  max-width: 1400px; margin: 0 auto;
+}
+
+/* ── Galería ───────────────────────────────── */
+.img-principal {
+  position: relative;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  margin-bottom: .5rem;
+  background: #F5F0E8;
+}
+.img-principal img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: opacity .3s;
+}
+.cursor-zoom { cursor: zoom-in; }
+
+.img-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center;
+  justify-content: center; color: #6B6B6B;
+}
+.badge {
+  position: absolute; top: 1rem; left: 1rem;
+  padding: .35rem .85rem; font-size: .75rem;
+  font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  pointer-events: none;
+}
+.badge.venta    { background: #1A1A1A; color: #F5F0E8; }
+.badge.arriendo { background: #2D6A4F; color: #fff; }
+
+/* Botón "ver todas" flotante */
+.btn-ver-todas {
+  position: absolute; bottom: 1rem; right: 1rem;
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem 1rem;
+  background: rgba(26,26,26,.82); color: #fff;
+  backdrop-filter: blur(8px);
+  font-size: .78rem; font-weight: 500; letter-spacing: .04em;
+  border: none; cursor: pointer;
+  transition: background .2s;
+}
+.btn-ver-todas:hover { background: #C9A84C; color: #1A1A1A; }
+
+/* Thumbnails */
+.img-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .4rem;
+}
+.thumb-btn {
+  position: relative;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  border: none; padding: 0; cursor: pointer;
+  background: #F5F0E8;
+}
+.thumb-btn img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform .3s, opacity .2s;
+}
+.thumb-btn:hover img { transform: scale(1.06); opacity: .85; }
+
+.thumb-overlay {
+  position: absolute; inset: 0;
+  background: rgba(26,26,26,.72);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: .88rem; font-weight: 600;
+}
+
+/* ── Descripciones / Amenidades ───────────── */
+.descripcion, .amenidades-section, .video-section {
+  margin-top: 2.5rem;
+}
+.descripcion h2, .amenidades-section h2, .video-section h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.3rem; margin-bottom: 1rem;
+  padding-bottom: .7rem; border-bottom: 1px solid rgba(26,26,26,.1);
+}
+.descripcion p { font-size: .95rem; color: #444; line-height: 1.8; }
+.amenidades-grid { display: flex; flex-wrap: wrap; gap: .6rem; }
+.amenidad {
+  padding: .4rem .9rem; background: #F5F0E8;
+  font-size: .82rem; color: #1A1A1A;
+}
+.video-link {
+  display: inline-block; padding: .7rem 1.5rem;
+  background: #FF0000; color: #fff; text-decoration: none;
+  font-size: .88rem; font-weight: 500; transition: background .2s;
+}
+.video-link:hover { background: #cc0000; }
+
+/* ── Aside ─────────────────────────────────── */
+.aside-card {
+  background: #fff; padding: 1.5rem;
+  margin-bottom: 1.2rem;
+  border: 1px solid rgba(26,26,26,.08);
+}
+.aside-card h3 {
+  font-size: .82rem; text-transform: uppercase; letter-spacing: .1em;
+  color: #6B6B6B; margin-bottom: 1rem;
+}
+.aside-precio {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.8rem; font-weight: 700; color: #1A1A1A;
+}
+.aside-precio-pesos { font-size: .85rem; color: #6B6B6B; margin-top: .2rem; }
+.aside-codigo { font-size: .75rem; color: #6B6B6B; margin-top: .5rem; }
+.specs-dl { display: flex; flex-direction: column; gap: .6rem; }
+.spec-row { display: flex; justify-content: space-between; font-size: .88rem; }
+.spec-row dt { color: #6B6B6B; }
+.spec-row dd { font-weight: 500; color: #1A1A1A; text-transform: capitalize; }
+.ubicacion-txt { font-size: .9rem; color: #1A1A1A; margin-bottom: .4rem; }
+.ubicacion-dir { font-size: .82rem; color: #6B6B6B; }
+.corredor-info { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem; }
+.corredor-avatar {
+  width: 52px; height: 52px; border-radius: 50%; overflow: hidden;
+  background: #C9A84C; display: flex; align-items: center;
+  justify-content: center; color: #1A1A1A; font-weight: 700; font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.corredor-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.corredor-nombre { font-weight: 500; font-size: .95rem; }
+.corredor-tel { font-size: .8rem; color: #6B6B6B; }
+.btn-wp-grande, .btn-email {
+  display: block; text-align: center; padding: .8rem;
+  font-size: .85rem; font-weight: 500; text-decoration: none;
+  transition: all .2s; margin-bottom: .6rem;
+}
+.btn-wp-grande { background: #25D366; color: #fff; }
+.btn-wp-grande:hover { background: #128C7E; }
+.btn-email { border: 1px solid rgba(26,26,26,.2); color: #1A1A1A; }
+.btn-email:hover { background: #1A1A1A; color: #fff; border-color: #1A1A1A; }
+
+/* ═══════════════════════════════════════════
+   LIGHTBOX
+════════════════════════════════════════════ */
+.lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+.lightbox[hidden] { display: none; }
+
+.lb-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(10,10,10,.95);
+  backdrop-filter: blur(4px);
+}
+
+.lb-container {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  width: 100%; height: 100dvh;
+  max-width: 1200px;
+  padding: 0 1rem;
+}
+
+/* Header */
+.lb-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 0 .75rem;
+  flex-shrink: 0;
+}
+.lb-counter {
+  font-size: .82rem; color: rgba(255,255,255,.5);
+  letter-spacing: .06em;
+}
+.lb-close {
+  background: none; border: none;
+  color: rgba(255,255,255,.6); cursor: pointer;
+  padding: .4rem; transition: color .2s;
+  display: flex; align-items: center;
+}
+.lb-close:hover { color: #C9A84C; }
+
+/* Stage: imagen central + flechas */
+.lb-stage {
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; gap: 1rem;
+}
+
+.lb-img-wrap {
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+#lb-img {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+  transition: opacity .25s;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Flechas */
+.lb-arrow {
+  flex-shrink: 0;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  color: #fff; cursor: pointer;
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, color .2s;
+  border-radius: 0;
+}
+.lb-arrow:hover { background: #C9A84C; border-color: #C9A84C; color: #1A1A1A; }
+
+/* Strip de thumbnails */
+.lb-strip {
+  display: flex; gap: .4rem;
+  padding: .75rem 0 1rem;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.lb-strip::-webkit-scrollbar { display: none; }
+
+.lb-strip-thumb {
+  flex-shrink: 0;
+  width: 72px; height: 54px;
+  border: 2px solid transparent;
+  padding: 0; cursor: pointer;
+  overflow: hidden; background: #1a1a1a;
+  scroll-snap-align: center;
+  transition: border-color .2s, opacity .2s;
+  opacity: .5;
+}
+.lb-strip-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+  pointer-events: none;
+}
+.lb-strip-thumb:hover { opacity: .85; }
+.lb-strip-thumb.active {
+  border-color: #C9A84C;
+  opacity: 1;
+}
+
+/* Spinner de carga */
+.lb-spinner {
+  display: none;
+  position: absolute; inset: 0;
+  align-items: center; justify-content: center;
+}
+
+/* ── Responsive ────────────────────────────── */
+@media (max-width: 1024px) {
+  .detalle-wrapper { grid-template-columns: 1fr; padding: 1rem 1.5rem 3rem; }
+  .breadcrumb { padding: 5.5rem 1.5rem 1rem; }
+  .detalle-aside { order: -1; }
+  .lb-arrow { width: 40px; height: 40px; }
+}
+
+@media (max-width: 600px) {
+  .img-thumbs { grid-template-columns: repeat(4, 1fr); gap: .25rem; }
+  .lb-stage { gap: .4rem; }
+  .lb-arrow { width: 36px; height: 36px; }
+  .lb-arrow svg { width: 18px; height: 18px; }
+  .lb-strip-thumb { width: 56px; height: 42px; }
+}
+</style>

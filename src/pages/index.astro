@@ -1,0 +1,161 @@
+---
+// src/pages/index.astro
+import Layout from '../layouts/Layout.astro';
+import PropCard from '../components/PropCard.astro';
+import SliderHero from '../components/SliderHero.astro';
+import { getPropiedades } from '../lib/wp-api.js';
+
+const params    = Astro.url.searchParams;
+const tipoOp    = params.get('tipo_operacion') || '';
+const tipoProp  = params.get('tipo_propiedad') || '';
+const precioMax = params.get('precio_max_uf')  || '';
+
+const destacadas = await getPropiedades({ destacada: 1, per_page: 5 });
+
+const propiedades = await getPropiedades({
+  tipo_operacion: tipoOp    || undefined,
+  tipo_propiedad: tipoProp  || undefined,
+  precio_max_uf:  precioMax ? Number(precioMax) : undefined,
+  per_page: 12,
+});
+
+const titulo = tipoOp === 'venta'    ? 'Propiedades en Venta'
+             : tipoOp === 'arriendo' ? 'Propiedades en Arriendo'
+             : 'Todas las Propiedades';
+---
+
+<Layout title="Propiedades en venta y arriendo en Chile">
+
+  {destacadas.length > 0 && (
+    <SliderHero propiedades={destacadas} />
+  )}
+
+  <div class="page-header">
+    <div class="page-header-inner">
+      <h1>{titulo}</h1>
+      <p>{propiedades.length} propiedad{propiedades.length !== 1 ? 'es' : ''} encontrada{propiedades.length !== 1 ? 's' : ''}</p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      <form class="filtros" method="get">
+        <div class="filtro-group">
+          <label>Operación</label>
+          <select name="tipo_operacion" onchange="this.form.submit()">
+            <option value="" selected={!tipoOp}>Todas</option>
+            <option value="venta"    selected={tipoOp === 'venta'}>Venta</option>
+            <option value="arriendo" selected={tipoOp === 'arriendo'}>Arriendo</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label>Tipo</label>
+          <select name="tipo_propiedad" onchange="this.form.submit()">
+            <option value="" selected={!tipoProp}>Todos</option>
+            <option value="casa"         selected={tipoProp === 'casa'}>Casa</option>
+            <option value="departamento" selected={tipoProp === 'departamento'}>Departamento</option>
+            <option value="terreno"      selected={tipoProp === 'terreno'}>Terreno</option>
+            <option value="oficina"      selected={tipoProp === 'oficina'}>Oficina</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label>Precio máx. UF</label>
+          <input type="number" name="precio_max_uf" value={precioMax} placeholder="Sin límite" min="1" />
+        </div>
+        <button type="submit" class="btn-filtrar">Filtrar</button>
+        {(tipoOp || tipoProp || precioMax) && (
+          <a href="/" class="btn-limpiar">✕ Limpiar</a>
+        )}
+      </form>
+
+      {propiedades.length > 0 ? (
+        <div class="props-grid">
+          {propiedades.map(prop => <PropCard prop={prop} />)}
+        </div>
+      ) : (
+        <div class="empty">
+          <p>No se encontraron propiedades con esos filtros.</p>
+          <a href="/">Ver todas</a>
+        </div>
+      )}
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+/* ── Paleta Gris Carbón + Cobre ── */
+.page-header {
+  background: #1C1C1E;
+  border-bottom: 1px solid #2C2C2E;
+}
+.page-header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.5rem 3rem;
+}
+.page-header-inner h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  color: #F2EDE8; margin-bottom: .4rem;
+}
+.page-header-inner p {
+  color: rgba(242,237,232,.35); font-size: .88rem;
+}
+
+.section { padding: 2.5rem 0 5rem; background: #F5F2EE; }
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 3rem;
+}
+
+.filtros {
+  display: flex; align-items: flex-end; gap: 1rem;
+  flex-wrap: wrap; margin-bottom: 2.5rem;
+  padding: 1.5rem; background: #EDE8E2;
+  border: 1px solid #D9D2C8;
+}
+.filtro-group { display: flex; flex-direction: column; gap: .3rem; }
+.filtro-group label {
+  font-size: .68rem; text-transform: uppercase;
+  letter-spacing: .1em; color: #7A7269;
+}
+.filtro-group select, .filtro-group input {
+  padding: .6rem .9rem;
+  border: 1px solid #C8C0B4;
+  background: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .88rem; outline: none; min-width: 150px;
+  color: #1C1C1E;
+}
+.filtro-group select:focus, .filtro-group input:focus {
+  border-color: #B87333;
+}
+.btn-filtrar {
+  padding: .6rem 1.5rem; background: #1C1C1E; color: #F2EDE8;
+  border: none; font-family: 'DM Sans', sans-serif;
+  font-weight: 500; cursor: pointer; transition: background .2s;
+}
+.btn-filtrar:hover { background: #B87333; }
+.btn-limpiar {
+  padding: .6rem 1rem; color: #7A7269; font-size: .82rem;
+  text-decoration: none; border: 1px solid #C8C0B4;
+  transition: all .2s;
+}
+.btn-limpiar:hover { border-color: #1C1C1E; color: #1C1C1E; }
+
+.props-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+.empty { text-align: center; padding: 4rem; color: #7A7269; }
+.empty a { color: #B87333; }
+
+@media (max-width: 768px) {
+  .page-header-inner { padding: 2rem 1.5rem; }
+  .container { padding: 0 1.5rem; }
+}
+</style>

@@ -1,0 +1,129 @@
+---
+// src/components/Breadcrumb.astro
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  items?: BreadcrumbItem[];
+  bgImage?: string;
+}
+
+const {
+  title,
+  subtitle,
+  items = [],
+  bgImage = '/images/bg-breadcrumb.webp',
+} = Astro.props;
+
+const crumbs: BreadcrumbItem[] = [
+  { label: 'Inicio', href: '/' },
+  ...items,
+  { label: title },
+];
+---
+
+<div class="page-hero" style={`background-image: url('${bgImage}')`}>
+  <div class="page-hero-overlay"></div>
+  <div class="page-hero-inner">
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb" aria-label="Navegación">
+      {crumbs.map((crumb, i) => (
+        <>
+          {i > 0 && <span class="bc-sep">/</span>}
+          {crumb.href
+            ? <a href={crumb.href} class="bc-link">{crumb.label}</a>
+            : <span class="bc-current">{crumb.label}</span>
+          }
+        </>
+      ))}
+    </nav>
+
+    <!-- Título -->
+    <h1 class="hero-title">{title}</h1>
+    {subtitle && <p class="hero-subtitle">{subtitle}</p>}
+
+    <!-- Línea decorativa -->
+    <div class="hero-line"></div>
+
+  </div>
+</div>
+
+<style>
+.page-hero {
+  position: relative;
+  padding-top: 72px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.page-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(17,24,39,0.88) 0%,
+    rgba(17,24,39,0.65) 60%,
+    rgba(17,24,39,0.45) 100%
+  );
+}
+
+.page-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3.5rem 3rem 3rem;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex; align-items: center; gap: .5rem;
+  margin-bottom: 1.2rem;
+}
+.bc-link {
+  font-size: .78rem; color: rgba(255,255,255,.45);
+  text-decoration: none; transition: color .2s;
+  letter-spacing: .03em; font-weight: 500;
+}
+.bc-link:hover { color: #C6A55C; }
+.bc-sep {
+  font-size: .72rem; color: rgba(255,255,255,.2);
+}
+.bc-current {
+  font-size: .78rem; color: #C6A55C;
+  letter-spacing: .03em; font-weight: 600;
+}
+
+/* Título */
+.hero-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+  font-weight: 800; line-height: 1.1;
+  color: #F5F0E8;
+  margin-bottom: .6rem;
+  letter-spacing: -.02em;
+}
+
+.hero-subtitle {
+  font-size: .98rem; line-height: 1.65;
+  color: rgba(245,240,232,.5);
+  max-width: 520px; font-weight: 400;
+}
+
+/* Línea decorativa dorada */
+.hero-line {
+  width: 48px; height: 2px;
+  background: #C6A55C;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .page-hero-inner { padding: 2.5rem 1.5rem 2.5rem; }
+}
+</style>

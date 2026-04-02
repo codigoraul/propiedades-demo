@@ -1,0 +1,269 @@
+---
+// src/components/Header.astro
+const currentPath = Astro.url.pathname;
+const isProps = currentPath.startsWith('/propiedades');
+---
+
+<header class="header" id="header">
+  <div class="header-inner">
+
+    <!-- Logo -->
+    <a href="/" class="header-logo" aria-label="Inicio">
+      <img src="/logo-inmopremiun.svg" alt="InmoPremium" class="logo-img" />
+    </a>
+
+    <!-- Nav desktop -->
+    <nav class="nav-links" aria-label="Navegación principal">
+
+      <a href="/" class={`nav-link ${currentPath === '/' ? 'active' : ''}`}>Inicio</a>
+      <a href="/nosotros" class={`nav-link ${currentPath === '/nosotros' ? 'active' : ''}`}>Nosotros</a>
+
+      <!-- Dropdown Propiedades -->
+      <div class="dropdown">
+        <button class={`nav-link dropdown-btn ${isProps ? 'active' : ''}`} aria-haspopup="true">
+          Propiedades
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="dropdown-menu">
+          <a href="/propiedades" class={`dropdown-item ${currentPath === '/propiedades' ? 'current' : ''}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Todas las propiedades
+          </a>
+          <a href="/propiedades/venta" class={`dropdown-item ${currentPath === '/propiedades/venta' ? 'current' : ''}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            En Venta
+          </a>
+          <a href="/propiedades/arriendo" class={`dropdown-item ${currentPath === '/propiedades/arriendo' ? 'current' : ''}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            En Arriendo
+          </a>
+        </div>
+      </div>
+
+      <a href="/contacto" class={`nav-link ${currentPath === '/contacto' ? 'active' : ''}`}>Contacto</a>
+
+    </nav>
+
+    <!-- CTA -->
+    <a href="/contacto" class="btn-header">Contactar</a>
+
+    <!-- Hamburger mobile -->
+    <button class="hamburger" id="hamburger" aria-label="Abrir menú">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <!-- Mobile menu -->
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <a href="/" class={`mobile-link ${currentPath === '/' ? 'active' : ''}`}>Inicio</a>
+    <a href="/nosotros" class={`mobile-link ${currentPath === '/nosotros' ? 'active' : ''}`}>Nosotros</a>
+
+    <!-- Submenu móvil propiedades -->
+    <div class="mobile-group">
+      <span class="mobile-group-label">Propiedades</span>
+      <a href="/propiedades" class={`mobile-sublink ${currentPath === '/propiedades' ? 'active' : ''}`}>Todas las propiedades</a>
+      <a href="/propiedades/venta" class={`mobile-sublink ${currentPath === '/propiedades/venta' ? 'active' : ''}`}>En Venta</a>
+      <a href="/propiedades/arriendo" class={`mobile-sublink ${currentPath === '/propiedades/arriendo' ? 'active' : ''}`}>En Arriendo</a>
+    </div>
+
+    <a href="/contacto" class={`mobile-link ${currentPath === '/contacto' ? 'active' : ''}`}>Contacto</a>
+    <a href="/contacto" class="btn-mobile">Contactar</a>
+  </div>
+</header>
+
+<script>
+  const header     = document.getElementById('header');
+  const hamburger  = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  // Scroll shadow
+  window.addEventListener('scroll', () => {
+    header?.classList.toggle('scrolled', window.scrollY > 50);
+  });
+
+  // Hamburger
+  hamburger?.addEventListener('click', () => {
+    const isOpen = mobileMenu?.classList.toggle('open');
+    hamburger.classList.toggle('active');
+    mobileMenu?.setAttribute('aria-hidden', String(!isOpen));
+  });
+  mobileMenu?.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      mobileMenu.classList.remove('open');
+      hamburger?.classList.remove('active');
+      mobileMenu.setAttribute('aria-hidden', 'true');
+    });
+  });
+
+  // Cerrar dropdown al hacer click fuera
+  document.addEventListener('click', (e) => {
+    const dropdown = document.querySelector('.dropdown');
+    if (!dropdown?.contains(e.target as Node)) {
+      dropdown?.classList.remove('open');
+    }
+  });
+
+  // Toggle dropdown en click
+  document.querySelector('.dropdown-btn')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelector('.dropdown')?.classList.toggle('open');
+  });
+</script>
+
+<style>
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(245,240,232,0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: all .3s;
+}
+.header.scrolled {
+  border-bottom-color: rgba(26,26,26,.1);
+  box-shadow: 0 2px 20px rgba(26,26,26,.06);
+}
+.header-inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: 0 3rem; height: 82px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.header-logo { display: flex; align-items: center; flex-shrink: 0; }
+.logo-img { height: 54px; width: auto; display: block; }
+
+/* Nav */
+.nav-links {
+  display: flex; align-items: center; gap: 2.5rem;
+}
+.nav-link {
+  font-size: .84rem; font-weight: 500;
+  letter-spacing: .04em; text-transform: uppercase;
+  color: #2C2C2C; text-decoration: none;
+  position: relative; transition: color .2s;
+  background: none; border: none; cursor: pointer;
+  padding: 0; font-family: 'Plus Jakarta Sans', sans-serif;
+  display: flex; align-items: center; gap: .35rem;
+}
+.nav-link::after {
+  content: ''; position: absolute;
+  bottom: -4px; left: 0; right: 0;
+  height: 1.5px; background: #C6A55C;
+  transform: scaleX(0); transition: transform .25s;
+}
+.nav-link:hover { color: #1A1A1A; }
+.nav-link:hover::after,
+.nav-link.active::after { transform: scaleX(1); }
+.nav-link.active { color: #1A1A1A; }
+
+/* Dropdown */
+.dropdown { position: relative; }
+.dropdown-btn svg {
+  transition: transform .25s;
+  flex-shrink: 0;
+}
+.dropdown.open .dropdown-btn svg { transform: rotate(180deg); }
+
+.dropdown-menu {
+  position: absolute; top: calc(100% + 1.2rem); left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid rgba(26,26,26,.1);
+  box-shadow: 0 8px 32px rgba(26,26,26,.1);
+  min-width: 220px;
+  opacity: 0; visibility: hidden;
+  transform: translateX(-50%) translateY(-6px);
+  transition: all .2s;
+  z-index: 200;
+}
+.dropdown.open .dropdown-menu {
+  opacity: 1; visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.dropdown-item {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .85rem 1.2rem;
+  font-size: .84rem; font-weight: 500;
+  color: #374151; text-decoration: none;
+  transition: all .2s;
+  border-bottom: 1px solid rgba(26,26,26,.05);
+}
+.dropdown-item:last-child { border-bottom: none; }
+.dropdown-item:hover {
+  background: #F5F0E8; color: #1A1A1A;
+}
+.dropdown-item:hover svg { color: #C6A55C; }
+.dropdown-item.current {
+  background: #F5F0E8; color: #C6A55C; font-weight: 600;
+}
+.dropdown-item svg { color: #9CA3AF; flex-shrink: 0; transition: color .2s; }
+
+/* CTA */
+.btn-header {
+  background: #1A1A1A; color: #F5F0E8;
+  padding: .55rem 1.4rem; font-size: .78rem; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  text-decoration: none; transition: all .2s; white-space: nowrap;
+}
+.btn-header:hover { background: #C6A55C; color: #1A1A1A; }
+
+/* Hamburger */
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: none; border: none; cursor: pointer; padding: .4rem;
+}
+.hamburger span {
+  display: block; width: 24px; height: 2px;
+  background: #1A1A1A; transition: all .3s;
+}
+.hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+/* Mobile menu */
+.mobile-menu {
+  display: none; flex-direction: column;
+  background: #F5F0E8; border-top: 1px solid rgba(26,26,26,.08);
+  padding: 1rem 2rem 1.5rem;
+}
+.mobile-menu.open { display: flex; }
+.mobile-link {
+  padding: .8rem 0; font-size: .95rem; font-weight: 500;
+  color: #2C2C2C; text-decoration: none;
+  border-bottom: 1px solid rgba(26,26,26,.07); transition: color .2s;
+}
+.mobile-link:hover, .mobile-link.active { color: #C6A55C; }
+
+.mobile-group {
+  border-bottom: 1px solid rgba(26,26,26,.07);
+  padding: .6rem 0;
+}
+.mobile-group-label {
+  display: block; font-size: .7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: #9CA3AF; padding: .4rem 0 .6rem;
+}
+.mobile-sublink {
+  display: block; padding: .55rem 0 .55rem 1rem;
+  font-size: .9rem; font-weight: 500;
+  color: #374151; text-decoration: none;
+  border-bottom: 1px solid rgba(26,26,26,.04);
+  transition: color .2s;
+}
+.mobile-sublink:hover, .mobile-sublink.active { color: #C6A55C; }
+
+.btn-mobile {
+  margin-top: 1rem; padding: .8rem;
+  background: #1A1A1A; color: #F5F0E8;
+  text-align: center; font-size: .88rem; font-weight: 600;
+  text-decoration: none; letter-spacing: .05em; text-transform: uppercase;
+  transition: background .2s;
+}
+.btn-mobile:hover { background: #C6A55C; color: #1A1A1A; }
+
+@media (max-width: 1024px) {
+  .header-inner { padding: 0 1.5rem; }
+  .nav-links, .btn-header { display: none; }
+  .hamburger { display: flex; }
+}
+</style>

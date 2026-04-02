@@ -1,0 +1,275 @@
+---
+// src/components/SliderHero.astro
+const { propiedades } = Astro.props;
+
+const badgeLabel = (op: string) =>
+  op === 'venta' ? 'En Venta'
+  : op === 'arriendo' ? 'Arriendo'
+  : op === 'arriendo_temp' ? 'Arriendo Temporal'
+  : op;
+---
+
+<section class="slider-wrap" id="hero-slider" aria-label="Propiedades destacadas">
+
+  {propiedades.map((prop: any, i: number) => {
+    const acf    = prop.acf ?? {};
+    const imagen = acf.imagen_principal?.url ?? prop.thumbnail_url ?? '';
+    const precio = acf.tipo_operacion === 'arriendo'
+      ? `UF ${acf.precio_arriendo_uf}/mes`
+      : `UF ${acf.precio_uf}`;
+
+    return (
+      <div class={`slide ${i === 0 ? 'active' : ''}`} data-index={i}>
+        {imagen
+          ? <img src={imagen} alt={prop.title?.rendered ?? ''} class="slide-img" loading={i === 0 ? 'eager' : 'lazy'} />
+          : <div class="slide-img slide-no-img"></div>
+        }
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <div class="slide-inner">
+            <span class={`slide-badge ${acf.tipo_operacion}`}>
+              {badgeLabel(acf.tipo_operacion)}
+            </span>
+            <div class="slide-precio">{precio}</div>
+            <h2 class="slide-titulo" set:html={prop.title?.rendered} />
+            <div class="slide-specs">
+              {acf.dormitorios > 0 && (
+                <span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20v-8a2 2 0 012-2h16a2 2 0 012 2v8"/><path d="M2 10V6a2 2 0 012-2h16a2 2 0 012 2v4"/></svg>
+                  {acf.dormitorios} dorm.
+                </span>
+              )}
+              {acf.banos > 0 && (
+                <span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h16a1 1 0 011 1v3a4 4 0 01-4 4H7a4 4 0 01-4-4v-3a1 1 0 011-1z"/><path d="M6 12V5a2 2 0 012-2h3v2.25"/></svg>
+                  {acf.banos} baños
+                </span>
+              )}
+              {acf.metros_construidos > 0 && (
+                <span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M9 21V9"/></svg>
+                  {acf.metros_construidos} m²
+                </span>
+              )}
+              {acf.ciudad && (
+                <span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {acf.ciudad}
+                </span>
+              )}
+            </div>
+            <div class="slide-btns">
+              <a href={`/propiedades/${prop.slug}`} class="btn-slide-ver">Ver propiedad</a>
+              {acf.corredor_telefono && (
+                <a
+                  href={`https://wa.me/${acf.corredor_telefono.replace(/\D/g,'')}?text=${encodeURIComponent('Hola, me interesa la propiedad: ' + (prop.title?.rendered ?? ''))}`}
+                  target="_blank" rel="noopener"
+                  class="btn-slide-wa"
+                >
+                  WhatsApp
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  })}
+
+  <div class="slide-num">
+    <span id="slide-cur">1</span> / <span id="slide-total">{propiedades.length}</span>
+  </div>
+
+  <button class="arrow arrow-prev" id="slider-prev" aria-label="Anterior">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <button class="arrow arrow-next" id="slider-next" aria-label="Siguiente">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+
+  <div class="slider-dots">
+    {propiedades.map((_: any, i: number) => (
+      <button class={`dot ${i === 0 ? 'active' : ''}`} data-i={i} aria-label={`Ir a propiedad ${i + 1}`}></button>
+    ))}
+  </div>
+
+</section>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const dots    = document.querySelectorAll('.dot');
+  const curEl   = document.getElementById('slide-cur');
+  const total   = slides.length;
+  let cur       = 0;
+  let timer: ReturnType<typeof setInterval>;
+
+  function goTo(i: number) {
+    slides[cur].classList.remove('active');
+    dots[cur]?.classList.remove('active');
+    cur = (i + total) % total;
+    slides[cur].classList.add('active');
+    dots[cur]?.classList.add('active');
+    if (curEl) curEl.textContent = String(cur + 1);
+  }
+
+  function startAuto() {
+    clearInterval(timer);
+    timer = setInterval(() => goTo(cur + 1), 5000);
+  }
+
+  document.getElementById('slider-prev')?.addEventListener('click', () => { goTo(cur - 1); startAuto(); });
+  document.getElementById('slider-next')?.addEventListener('click', () => { goTo(cur + 1); startAuto(); });
+  dots.forEach(d => {
+    d.addEventListener('click', () => { goTo(Number((d as HTMLElement).dataset.i)); startAuto(); });
+  });
+
+  let tx = 0;
+  const slider = document.getElementById('hero-slider');
+  slider?.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  slider?.addEventListener('touchend', e => {
+    const diff = tx - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { diff > 0 ? goTo(cur + 1) : goTo(cur - 1); startAuto(); }
+  });
+
+  startAuto();
+</script>
+
+<style>
+/*
+  Paleta:
+  --gold:   #C6A55C
+  --dark:   #1A1A1A
+  --gray:   #2C2C2C
+  --cream:  #E8E4DC
+  --light:  #F5F0E8
+*/
+.slider-wrap {
+  position: relative; width: 100%; height: 620px;
+  overflow: hidden; background: #1A1A1A;
+}
+.slide {
+  position: absolute; inset: 0;
+  opacity: 0; transition: opacity .8s ease;
+}
+.slide.active { opacity: 1; }
+.slide-img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.slide-no-img {
+  background: linear-gradient(135deg, #1A1A1A 0%, #2C2C2C 100%);
+  width: 100%; height: 100%;
+}
+.slide-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(26,26,26,0.93) 0%,
+    rgba(26,26,26,0.48) 50%,
+    rgba(26,26,26,0.08) 100%
+  );
+}
+
+/* Container centrado 1280px */
+.slide-content {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding-bottom: 4rem;
+}
+.slide-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
+
+.slide-badge {
+  display: inline-block; padding: .3rem 1rem;
+  font-size: .7rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.slide-badge.venta         { background: #1A1A1A; color: #E8E4DC; }
+.slide-badge.arriendo      { background: #2D6A4F; color: #fff; }
+.slide-badge.arriendo_temp { background: #4A90D9; color: #fff; }
+
+.slide-precio {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2.6rem; font-weight: 700;
+  color: #C6A55C; line-height: 1; margin-bottom: .5rem;
+}
+.slide-titulo {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 600;
+  color: #F5F0E8; margin-bottom: 1.2rem; line-height: 1.2;
+  max-width: 680px;
+}
+.slide-specs {
+  display: flex; gap: 1.8rem; flex-wrap: wrap; margin-bottom: 1.8rem;
+}
+.slide-specs span {
+  display: flex; align-items: center; gap: .45rem;
+  font-size: .88rem; color: rgba(232,228,220,.65);
+}
+.slide-specs svg { opacity: .55; flex-shrink: 0; }
+
+.slide-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+.btn-slide-ver {
+  background: #1A1A1A; color: #E8E4DC;
+  padding: .8rem 2rem; font-size: .88rem; font-weight: 600;
+  text-decoration: none; transition: all .2s; letter-spacing: .03em;
+}
+.btn-slide-ver:hover { background: #C6A55C; color: #1A1A1A; transform: translateY(-2px); }
+.btn-slide-wa {
+  background: transparent; color: #E8E4DC;
+  border: 1px solid rgba(232,228,220,.3);
+  padding: .8rem 2rem; font-size: .88rem; font-weight: 500;
+  text-decoration: none; transition: all .2s;
+}
+.btn-slide-wa:hover { background: #25D366; border-color: #25D366; color: #fff; }
+
+.slide-num {
+  position: absolute; top: 1.5rem; right: 2rem;
+  font-size: .78rem; color: rgba(232,228,220,.35);
+  letter-spacing: .08em; z-index: 10;
+}
+.arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 46px; height: 46px;
+  background: rgba(232,228,220,.07);
+  border: 1px solid rgba(232,228,220,.18);
+  color: #E8E4DC; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s; z-index: 10;
+}
+.arrow:hover { background: #C6A55C; border-color: #C6A55C; color: #1A1A1A; }
+.arrow-prev { left: 2rem; }
+.arrow-next { right: 2rem; }
+
+.slider-dots {
+  position: absolute; bottom: 1.5rem;
+  left: 50%; transform: translateX(-50%);
+  display: flex; gap: .5rem; z-index: 10;
+}
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(232,228,220,.25); border: none;
+  cursor: pointer; padding: 0; transition: all .3s;
+}
+.dot.active { background: #C6A55C; width: 28px; border-radius: 4px; }
+
+@media (max-width: 1024px) {
+  .slide-inner { padding-left: 2rem; padding-right: 2rem; }
+}
+@media (max-width: 768px) {
+  .slider-wrap { height: 520px; }
+  .slide-inner { padding-left: 1.5rem; padding-right: 1.5rem; }
+  .slide-precio { font-size: 2rem; }
+  .arrow-prev { left: .8rem; }
+  .arrow-next { right: .8rem; }
+  .arrow { width: 38px; height: 38px; }
+}
+@media (max-width: 480px) {
+  .slider-wrap { height: 440px; }
+  .slide-titulo { font-size: 1.3rem; }
+  .slide-precio { font-size: 1.6rem; }
+}
+</style>
