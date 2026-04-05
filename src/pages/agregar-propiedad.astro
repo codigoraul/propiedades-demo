@@ -324,19 +324,98 @@ import Breadcrumb from '../components/Breadcrumb.astro';
 
     try {
       const fd = new FormData(form);
-      const res = await fetch('/api/crear-propiedad', { method: 'POST', body: fd });
-      const data = await res.json();
 
-      if (data.ok) {
-        form.classList.add('hidden');
-        msgExito?.classList.remove('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        mostrarError(data.error || 'Error al enviar. Intenta nuevamente.');
-        btnSubmit.disabled = false;
-        btnText?.classList.remove('hidden');
-        btnLoading?.classList.add('hidden');
+      // ── Config WordPress ──────────────────────────
+      const WP_API  = 'https://disenopaginas.cl/wp-json/wp/v2';
+      const WP_USER = 'PropiedadesBot';
+      const WP_PASS = 'xnOT dDMo X6IZ wPaG uO5f Kq3q';
+      const auth    = 'Basic ' + btoa(`${WP_USER}:${WP_PASS}`);
+
+      // ── Subir fotos a Media Library ───────────────
+      const fotos = fd.getAll('fotos') as File[];
+      const fotosValidas = fotos.filter(f => f.size > 0);
+      const mediaIds: number[] = [];
+
+      for (const foto of fotosValidas) {
+        const buffer = await foto.arrayBuffer();
+        const mediaRes = await fetch(`${WP_API}/media`, {
+          method: 'POST',
+          headers: {
+            'Authorization': auth,
+            'Content-Disposition': `attachment; filename="${foto.name}"`,
+            'Content-Type': foto.type,
+          },
+          body: buffer,
+        });
+        if (mediaRes.ok) {
+          const media = await mediaRes.json();
+          mediaIds.push(media.id);
+        }
       }
+
+      // ── Subir imagen principal destacada ──────────
+      let imagenPrincipalId: number | null = null;
+      const imgDest = fd.get('imagen_principal_destacada') as File | null;
+      if (imgDest && imgDest.size > 0) {
+        const buffer = await imgDest.arrayBuffer();
+        const mediaRes = await fetch(`${WP_API}/media`, {
+          method: 'POST',
+          headers: {
+            'Authorization': auth,
+            'Content-Disposition': `attachment; filename="principal-${imgDest.name}"`,
+            'Content-Type': imgDest.type,
+          },
+          body: buffer,
+        });
+        if (mediaRes.ok) {
+          const media = await mediaRes.json();
+          imagenPrincipalId = media.id;
+        }
+      }
+
+      // ── Crear propiedad como borrador ─────────────
+      const acfData: Record<string, any> = {
+        tipo_operacion:     fd.get('tipo_operacion'),
+        tipo_propiedad:     fd.get('tipo_propiedad'),
+        precio_uf:          parseFloat(fd.get('precio_uf') as string),
+        metros_construidos: parseFloat(fd.get('metros_construidos') as string),
+        ciudad:             fd.get('ciudad'),
+        corredor_nombre:    fd.get('corredor_nombre'),
+        corredor_telefono:  fd.get('corredor_telefono'),
+        descripcion_larga:  fd.get('descripcion') || '',
+        destacada:          fd.get('destacada') === '1',
+      };
+
+      const dormitorios = fd.get('dormitorios')?.toString();
+      const banos       = fd.get('banos')?.toString();
+      const estac       = fd.get('estacionamientos')?.toString();
+      const sector      = fd.get('sector')?.toString().trim();
+      const corrEmail   = fd.get('corredor_email')?.toString().trim();
+      if (dormitorios) acfData.dormitorios = parseInt(dormitorios);
+      if (banos)       acfData.banos = parseInt(banos);
+      if (estac)       acfData.estacionamientos = parseInt(estac);
+      if (sector)      acfData.sector = sector;
+      if (corrEmail)   acfData.corredor_email = corrEmail;
+      if (imagenPrincipalId) acfData.imagen_principal = imagenPrincipalId;
+      else if (mediaIds.length > 0) acfData.imagen_principal = mediaIds[0];
+
+      const propRes = await fetch(`${WP_API}/propiedades`, {
+        method: 'POST',
+        headers: { 'Authorization': auth, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title:   fd.get('titulo'),
+          status:  'draft',
+          excerpt: (fd.get('descripcion')?.toString() || '').substring(0, 160),
+          acf:     acfData,
+          featured_media: imagenPrincipalId ?? mediaIds[0] ?? 0,
+        }),
+      });
+
+      if (!propRes.ok) throw new Error('WP error');
+
+      form.classList.add('hidden');
+      msgExito?.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {
       mostrarError('Error de conexión. Verifica tu internet e intenta nuevamente.');
       btnSubmit.disabled = false;
