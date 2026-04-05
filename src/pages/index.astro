@@ -5,23 +5,10 @@ import PropCard from '../components/PropCard.astro';
 import SliderHero from '../components/SliderHero.astro';
 import { getPropiedades } from '../lib/wp-api.js';
 
-const params    = Astro.url.searchParams;
-const tipoOp    = params.get('tipo_operacion') || '';
-const tipoProp  = params.get('tipo_propiedad') || '';
-const precioMax = params.get('precio_max_uf')  || '';
-
 const destacadas = await getPropiedades({ destacada: true, per_page: 5 });
+const propiedades = await getPropiedades({ per_page: 12 });
 
-const propiedades = await getPropiedades({
-  tipo_operacion: tipoOp    || undefined,
-  tipo_propiedad: tipoProp  || undefined,
-  precio_max_uf:  precioMax ? Number(precioMax) : undefined,
-  per_page: 12,
-});
-
-const titulo = tipoOp === 'venta'    ? 'Propiedades en Venta'
-             : tipoOp === 'arriendo' ? 'Propiedades en Arriendo'
-             : 'Todas las Propiedades';
+const titulo = 'Todas las Propiedades';
 ---
 
 <Layout title="Propiedades en venta y arriendo en Chile">
@@ -39,31 +26,6 @@ const titulo = tipoOp === 'venta'    ? 'Propiedades en Venta'
 
   <section class="section">
     <div class="container">
-      <form class="filtros" method="get" action="/busqueda">
-        <div class="filtro-group">
-          <label>Operación</label>
-          <select name="tipo_operacion">
-            <option value="">Todas</option>
-            <option value="venta">Venta</option>
-            <option value="arriendo">Arriendo</option>
-          </select>
-        </div>
-        <div class="filtro-group">
-          <label>Tipo</label>
-          <select name="tipo_propiedad">
-            <option value="">Todos</option>
-            <option value="casa">Casa</option>
-            <option value="departamento">Departamento</option>
-            <option value="terreno">Terreno</option>
-            <option value="oficina">Oficina</option>
-          </select>
-        </div>
-        <div class="filtro-group">
-          <label>Precio máx. UF</label>
-          <input type="number" name="precio_max_uf" placeholder="Sin límite" min="1" />
-        </div>
-        <button type="submit" class="btn-filtrar">Filtrar</button>
-      </form>
 
       {propiedades.length > 0 ? (
         <div class="props-grid">
