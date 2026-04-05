@@ -68,18 +68,73 @@ async function wpFetch(endpoint) {
  */
 export async function getPropiedades(filtros = {}) {
   const params = new URLSearchParams();
-  params.set('per_page', filtros.per_page ?? 12);
-  params.set('page',     filtros.page ?? 1);
-  // params.set('_embed',   '1');   // incluye featured_media embebido
-  params.set('acf', 'true');      // incluye campos ACF
+  params.set('per_page', 100); // Obtener más propiedades para filtrar del lado del cliente
+  params.set('status', 'publish');
+  params.set('acf', 'true');
   params.set('_fields', 'id,slug,title,excerpt,thumbnail_url,acf');
 
-  if (filtros.tipo_operacion) params.set('tipo_operacion', filtros.tipo_operacion);
-  if (filtros.tipo_propiedad) params.set('tipo_propiedad', filtros.tipo_propiedad);
-  if (filtros.destacada)      params.set('destacada', '1');
-  if (filtros.precio_max_uf)  params.set('precio_max_uf', filtros.precio_max_uf);
+  let propiedades = await wpFetch(`/propiedades?${params.toString()}`) ?? [];
 
-  return wpFetch(`/propiedades?${params.toString()}`) ?? [];
+  console.log('Total propiedades obtenidas:', propiedades.length);
+  console.log('Filtros aplicados:', filtros);
+  
+  // Log detallado de la primera propiedad para ver la estructura
+  if (propiedades.length > 0) {
+    console.log('Estructura ACF de la primera propiedad:', JSON.stringify(propiedades[0].acf, null, 2));
+  }
+
+  // Filtrar del lado del cliente por tipo_operacion
+  if (filtros.tipo_operacion) {
+    const tipoOperacionBuscado = filtros.tipo_operacion.toLowerCase();
+    console.log('Filtrando por tipo_operacion:', tipoOperacionBuscado);
+    
+    const antes = propiedades.length;
+    propiedades = propiedades.filter(prop => {
+      // Verificar múltiples rutas donde puede estar el campo
+      const valor = prop.acf?.tipo_operacion 
+                 || prop.meta?.tipo_operacion 
+                 || prop.tipo_operacion;
+      
+      const tipoOperacion = valor?.toString().toLowerCase();
+      console.log(`Propiedad "${prop.title?.rendered}" - tipo_operacion en ACF: "${prop.acf?.tipo_operacion}", valor final: "${tipoOperacion}"`);
+      return tipoOperacion === tipoOperacionBuscado;
+    });
+    console.log(`Después del filtro tipo_operacion: ${antes} -> ${propiedades.length}`);
+  }
+
+  // Filtrar por tipo_propiedad
+  if (filtros.tipo_propiedad) {
+    const tipoPropiedadBuscado = filtros.tipo_propiedad.toLowerCase();
+    propiedades = propiedades.filter(prop => {
+      const tipoPropiedad = prop.acf?.tipo_propiedad?.toLowerCase();
+      return tipoPropiedad === tipoPropiedadBuscado;
+    });
+  }
+
+  // Filtrar por destacada
+  if (filtros.destacada) {
+    propiedades = propiedades.filter(prop => {
+      const destacada = prop.acf?.destacada;
+      // Incluir si está marcada como destacada O si el campo no existe (propiedades antiguas)
+      return destacada === true || destacada === '1' || destacada === 1 || destacada === undefined || destacada === null;
+    });
+  }
+
+  // Filtrar por precio máximo
+  if (filtros.precio_max_uf) {
+    propiedades = propiedades.filter(prop => {
+      const precio = prop.acf?.precio_uf;
+      return precio && Number(precio) <= Number(filtros.precio_max_uf);
+    });
+  }
+
+  // Aplicar paginación después del filtrado
+  const perPage = filtros.per_page ?? 12;
+  const page = filtros.page ?? 1;
+  const start = (page - 1) * perPage;
+  const end = start + perPage;
+
+  return propiedades.slice(start, end);
 }
 
 // ── OBTENER PROPIEDAD POR SLUG ────────────────────────────────

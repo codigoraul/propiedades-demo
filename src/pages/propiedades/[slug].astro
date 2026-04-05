@@ -29,14 +29,35 @@ const precio = acf.tipo_operacion === 'arriendo'
   : formatUF(acf.precio_uf);
 
 const amenidades = acf.amenidades ?? [];
-const amenidadesLabels = {
-  piscina: '🏊 Piscina', jardin: '🌿 Jardín', terraza: '🌅 Terraza',
-  bodega: '📦 Bodega', quincho: '🔥 Quincho', calefaccion: '🌡 Calefacción',
-  aire_acond: '❄️ Aire acond.', domotica: '🤖 Domótica', seguridad: '🔒 Seguridad',
-  portero: '🏢 Portería', gym: '💪 Gimnasio', sala_eventos: '🎉 Sala eventos',
-  mascotas: '🐾 Mascotas OK', amoblado: '🛋 Amoblado',
+
+// Iconos SVG modernos para amenidades
+const amenidadesIcons = {
+  piscina: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 15c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 19c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><circle cx="7" cy="5" r="2"/></svg>',
+  jardin: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22v-8m0 0c-2.5 0-4.5-2-4.5-4.5S9.5 5 12 5s4.5 2 4.5 4.5S14.5 14 12 14z"/><path d="M8.5 14c-1.5 0-2.5-1-2.5-2.5S7 9 8.5 9"/><path d="M15.5 14c1.5 0 2.5-1 2.5-2.5S17 9 15.5 9"/></svg>',
+  terraza: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="12" rx="1"/><path d="M3 8V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2"/><path d="M12 8v12"/></svg>',
+  bodega: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
+  quincho: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+  calefaccion: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>',
+  aire_acond: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2h8"/><path d="M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2"/><path d="M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0"/></svg>',
+  gym: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5 18 18"/><path d="m6.5 18 11.5-11.5"/><path d="m20.5 10-2 2"/><path d="m17 13-2 2"/><path d="M3.5 14l2-2"/><path d="m7 11 2-2"/><path d="m21 15-1.5 1.5"/><path d="m3 9 1.5-1.5"/></svg>',
+  mascotas: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/></svg>',
+  amoblado: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 20v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"/><path d="M5 10V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4"/><path d="M3 18h18"/></svg>',
+  seguridad: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>',
+  portero: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/><path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/><path d="M12 3v6"/></svg>',
+  sala_eventos: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3h5v5"/><path d="M21 3l-7 7"/></svg>',
+  domotica: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h-9v8h-2v-8H1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2Z"/></svg>',
 };
+
+const amenidadesLabels = {
+  piscina: 'Piscina', jardin: 'Jardín', terraza: 'Terraza',
+  bodega: 'Bodega', quincho: 'Quincho', calefaccion: 'Calefacción',
+  aire_acond: 'Aire acond.', domotica: 'Domótica', seguridad: 'Seguridad',
+  portero: 'Portería', gym: 'Gimnasio', sala_eventos: 'Sala eventos',
+  mascotas: 'Mascotas OK', amoblado: 'Amoblado',
+};
+
 const getAmenidadLabel = (key) => amenidadesLabels[key] ?? key;
+const getAmenidadIcon = (key) => amenidadesIcons[key] ?? '';
 
 const wpLink = acf.corredor_telefono
   ? whatsappLink(acf.corredor_telefono, `${titulo} — ${acf.ciudad}`)
@@ -131,7 +152,10 @@ const imagenesJSON = JSON.stringify(todasLasImagenes);
           <h2>Características incluidas</h2>
           <div class="amenidades-grid">
             {amenidades.map(key => (
-              <span class="amenidad">{getAmenidadLabel(key)}</span>
+              <span class="amenidad">
+                <span class="amenidad-icon" set:html={getAmenidadIcon(key)} />
+                {getAmenidadLabel(key)}
+              </span>
             ))}
           </div>
         </div>
@@ -178,7 +202,12 @@ const imagenesJSON = JSON.stringify(todasLasImagenes);
 
       <div class="aside-card">
         <h3>Ubicación</h3>
-        <p class="ubicacion-txt">📍 {[acf.sector, acf.ciudad, acf.region].filter(Boolean).join(', ')}</p>
+        <p class="ubicacion-txt">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px;color:#8B6F47">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          {[acf.sector, acf.ciudad, acf.region].filter(Boolean).join(', ')}
+        </p>
         {acf.direccion && <p class="ubicacion-dir">{acf.direccion}</p>}
       </div>
 
@@ -198,11 +227,17 @@ const imagenesJSON = JSON.stringify(todasLasImagenes);
             </div>
           </div>
           <a href={wpLink} target="_blank" rel="noopener" class="btn-wp-grande">
-            💬 Contactar por WhatsApp
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:middle;margin-right:6px">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+            </svg>
+            Contactar por WhatsApp
           </a>
           {acf.corredor_email && (
             <a href={`mailto:${acf.corredor_email}`} class="btn-email">
-              📧 Enviar correo
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block;vertical-align:middle;margin-right:6px">
+                <rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+              </svg>
+              Enviar correo
             </a>
           )}
         </div>
@@ -464,8 +499,22 @@ const imagenesJSON = JSON.stringify(todasLasImagenes);
 .descripcion p { font-size: .95rem; color: #444; line-height: 1.8; }
 .amenidades-grid { display: flex; flex-wrap: wrap; gap: .6rem; }
 .amenidad {
-  padding: .4rem .9rem; background: #F5F0E8;
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem 1rem; background: #F5F0E8;
   font-size: .82rem; color: #1A1A1A;
+  border-radius: 4px;
+  transition: all .2s;
+}
+.amenidad:hover {
+  background: #E8E4DC;
+  transform: translateY(-1px);
+}
+.amenidad-icon {
+  display: flex; align-items: center;
+  color: #8B6F47;
+}
+.amenidad-icon svg {
+  width: 16px; height: 16px;
 }
 .video-link {
   display: inline-block; padding: .7rem 1.5rem;

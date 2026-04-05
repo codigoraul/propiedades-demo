@@ -12,6 +12,7 @@
     "astro": "node ./node_modules/astro/bin/astro.mjs"
   },
   "dependencies": {
+    "@astrojs/node": "^10.0.4",
     "astro": "^6.1.2"
   }
 }

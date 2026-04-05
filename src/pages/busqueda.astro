@@ -1,0 +1,322 @@
+---
+// src/pages/busqueda.astro
+import Layout from '../layouts/Layout.astro';
+import PropCard from '../components/PropCard.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import { getPropiedades } from '../lib/wp-api.js';
+
+const params = Astro.url.searchParams;
+// DESPUÉS
+const tipoOp = params.get('tipo_operacion')?.trim() || undefined;
+const tipoProp = params.get('tipo_propiedad')?.trim() || undefined;
+const precioMax = params.get('precio_max_uf')?.trim() || undefined;
+console.log('SSR - Parámetros recibidos:', { tipoOp, tipoProp, precioMax, url: Astro.url.href });
+
+// DESPUÉS
+const propiedades = await getPropiedades({
+  tipo_operacion: tipoOp,
+  tipo_propiedad: tipoProp,
+  precio_max_uf: precioMax ? Number(precioMax) : undefined,
+  per_page: 50,
+});
+
+const titulo = 'Resultados de Búsqueda';
+const subtitulo = `${propiedades.length} propiedad${propiedades.length !== 1 ? 'es' : ''} encontrada${propiedades.length !== 1 ? 's' : ''}`;
+---
+
+<Layout
+  title="Búsqueda de Propiedades · InmoPremium"
+  description="Resultados de búsqueda de propiedades"
+>
+
+  <Breadcrumb
+    title={titulo}
+    subtitle={subtitulo}
+    items={[{ label: 'Inicio', href: '/' }]}
+  />
+
+  <section class="section">
+    <div class="container">
+
+      <!-- Filtros activos -->
+      <div class="filtros-activos">
+        <h3>Filtros aplicados:</h3>
+        <div class="tags">
+          {tipoOp && (
+            <span class="tag">
+              Operación: <strong>{tipoOp === 'venta' ? 'Venta' : 'Arriendo'}</strong>
+            </span>
+          )}
+          {tipoProp && (
+            <span class="tag">
+              Tipo: <strong>{tipoProp.replace('_', ' ')}</strong>
+            </span>
+          )}
+          {precioMax && (
+            <span class="tag">
+              Precio máx: <strong>{precioMax} UF</strong>
+            </span>
+          )}
+          {!tipoOp && !tipoProp && !precioMax && (
+            <span class="tag-empty">Sin filtros aplicados</span>
+          )}
+        </div>
+        <a href="/" class="btn-nueva-busqueda">← Nueva búsqueda</a>
+      </div>
+
+      <!-- Formulario de filtros -->
+      <form class="filtros" method="get">
+        <div class="filtro-group">
+          <label>Operación</label>
+          <select name="tipo_operacion">
+            <option value="" selected={!tipoOp}>Todas</option>
+            <option value="venta" selected={tipoOp === 'venta'}>Venta</option>
+            <option value="arriendo" selected={tipoOp === 'arriendo'}>Arriendo</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label>Tipo</label>
+          <select name="tipo_propiedad">
+            <option value="" selected={!tipoProp}>Todos</option>
+            <option value="casa" selected={tipoProp === 'casa'}>Casa</option>
+            <option value="departamento" selected={tipoProp === 'departamento'}>Departamento</option>
+            <option value="terreno" selected={tipoProp === 'terreno'}>Terreno</option>
+            <option value="oficina" selected={tipoProp === 'oficina'}>Oficina</option>
+            <option value="local_comercial" selected={tipoProp === 'local_comercial'}>Local Comercial</option>
+            <option value="parcela" selected={tipoProp === 'parcela'}>Parcela</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label>Precio máx. UF</label>
+          <input type="number" name="precio_max_uf" value={precioMax} placeholder="Sin límite" min="1" />
+        </div>
+        <button type="submit" class="btn-filtrar">Refinar búsqueda</button>
+        {(tipoOp || tipoProp || precioMax) && (
+          <a href="/busqueda" class="btn-limpiar">✕ Limpiar filtros</a>
+        )}
+      </form>
+
+      <!-- Resultados -->
+      {propiedades.length > 0 ? (
+        <div class="props-grid">
+          {propiedades.map(prop => <PropCard prop={prop} />)}
+        </div>
+      ) : (
+        <div class="empty">
+          <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+          <h3>No se encontraron propiedades</h3>
+          <p>No hay propiedades que coincidan con tu búsqueda. Intenta modificar los filtros.</p>
+          <a href="/" class="btn-ver-todas">Volver al inicio</a>
+        </div>
+      )}
+
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+.section {
+  padding: 2.5rem 0 6rem;
+  background: #F5F0E8;
+}
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 3rem;
+}
+
+/* Filtros activos */
+.filtros-activos {
+  background: #fff;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #E8E4DC;
+  border-radius: 4px;
+}
+.filtros-activos h3 {
+  font-size: .9rem;
+  font-weight: 600;
+  color: #4A5568;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.tags {
+  display: flex;
+  gap: .8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.tag {
+  background: #8B6F47;
+  color: #fff;
+  padding: .5rem 1rem;
+  border-radius: 20px;
+  font-size: .85rem;
+}
+.tag strong {
+  font-weight: 600;
+}
+.tag-empty {
+  color: #999;
+  font-size: .85rem;
+  font-style: italic;
+}
+.btn-nueva-busqueda {
+  display: inline-block;
+  color: #8B6F47;
+  font-size: .85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color .2s;
+}
+.btn-nueva-busqueda:hover {
+  color: #1A1A1A;
+}
+
+/* Filtros */
+.filtros {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+  padding: 1.5rem;
+  background: #EDE8E2;
+  border: 1px solid rgba(26,26,26,.1);
+}
+.filtro-group {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+.filtro-group label {
+  font-size: .68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: #4A5568;
+}
+.filtro-group select,
+.filtro-group input {
+  padding: .6rem .9rem;
+  border: 1px solid rgba(26,26,26,.15);
+  background: #fff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .88rem;
+  outline: none;
+  min-width: 160px;
+  color: #1E2433;
+  transition: border-color .2s;
+}
+.filtro-group select:focus,
+.filtro-group input:focus {
+  border-color: #8B6F47;
+}
+
+.btn-filtrar {
+  padding: .65rem 1.6rem;
+  background: #8B6F47;
+  color: #fff;
+  border: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-filtrar:hover {
+  background: #6B5537;
+}
+
+.btn-limpiar {
+  padding: .65rem 1rem;
+  color: #4A5568;
+  font-size: .82rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid rgba(26,26,26,.15);
+  transition: all .2s;
+}
+.btn-limpiar:hover {
+  border-color: #1E2433;
+  color: #1E2433;
+}
+
+/* Grid */
+.props-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.8rem;
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 5rem 2rem;
+  color: #4A5568;
+}
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  background: #E8E4DC;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: #8B6F47;
+}
+.empty h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1E2433;
+  margin-bottom: .6rem;
+}
+.empty p {
+  font-size: .9rem;
+  color: #4A5568;
+  margin-bottom: 1.5rem;
+}
+.btn-ver-todas {
+  display: inline-block;
+  background: #8B6F47;
+  color: #fff;
+  padding: .75rem 2rem;
+  font-size: .88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .2s;
+}
+.btn-ver-todas:hover {
+  background: #6B5537;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    padding: 0 1.5rem;
+  }
+}
+@media (max-width: 640px) {
+  .filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filtro-group select,
+  .filtro-group input {
+    min-width: 100%;
+  }
+  .btn-filtrar,
+  .btn-limpiar {
+    width: 100%;
+    text-align: center;
+  }
+}
+</style>

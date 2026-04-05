@@ -1,4 +1,6 @@
 export const prerender = false;
+
+
 // src/pages/api/crear-propiedad.ts
 import type { APIRoute } from 'astro';
 
@@ -49,6 +51,17 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
+    // ── Validar imagen principal destacada ───────
+    const imagenPrincipalDestacada = formData.get('imagen_principal_destacada') as File | null;
+    if (imagenPrincipalDestacada && imagenPrincipalDestacada.size > 0) {
+      if (imagenPrincipalDestacada.size > 5 * 1024 * 1024) {
+        return new Response(JSON.stringify({ error: 'La imagen principal no puede superar los 5MB.' }), { status: 400, headers });
+      }
+      if (!['image/jpeg','image/png','image/webp'].includes(imagenPrincipalDestacada.type)) {
+        return new Response(JSON.stringify({ error: 'La imagen principal debe ser JPG, PNG o WebP.' }), { status: 400, headers });
+      }
+    }
+
     // ── Auth header ──────────────────────────────
     const auth = 'Basic ' + Buffer.from(`${WP_USER}:${WP_PASS}`).toString('base64');
 
@@ -72,6 +85,25 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
+    // ── Subir imagen principal destacada ─────────
+    let imagenPrincipalId: number | null = null;
+    if (imagenPrincipalDestacada && imagenPrincipalDestacada.size > 0) {
+      const buffer = await imagenPrincipalDestacada.arrayBuffer();
+      const mediaRes = await fetch(`${WP_API}/media`, {
+        method: 'POST',
+        headers: {
+          'Authorization': auth,
+          'Content-Disposition': `attachment; filename="principal-${imagenPrincipalDestacada.name}"`,
+          'Content-Type': imagenPrincipalDestacada.type,
+        },
+        body: buffer,
+      });
+      if (mediaRes.ok) {
+        const media = await mediaRes.json();
+        imagenPrincipalId = media.id;
+      }
+    }
+
     // ── Crear propiedad como BORRADOR ────────────
     const acfData: Record<string, any> = {
       tipo_operacion:    tipoOp,
@@ -82,7 +114,7 @@ export const POST: APIRoute = async ({ request }) => {
       corredor_nombre:   corrNombre,
       corredor_telefono: corrTel,
       descripcion_larga: descripcion,
-      destacada:         false,
+      destacada: formData.get('destacada') === '1',
     };
 
     // Campos opcionales
@@ -98,8 +130,10 @@ export const POST: APIRoute = async ({ request }) => {
     if (sector)      acfData.sector = sector;
     if (corrEmail)   acfData.corredor_email = corrEmail;
 
-    // Imagen principal = primera foto subida
-    if (mediaIds.length > 0) {
+    // Imagen principal = imagen destacada si existe, sino primera foto de galería
+    if (imagenPrincipalId) {
+      acfData.imagen_principal = imagenPrincipalId;
+    } else if (mediaIds.length > 0) {
       acfData.imagen_principal = mediaIds[0];
     }
 
@@ -114,7 +148,7 @@ export const POST: APIRoute = async ({ request }) => {
         status:  'draft',   // ← BORRADOR — requiere aprobación
         excerpt: descripcion.substring(0, 160),
         acf:     acfData,
-        featured_media: mediaIds[0] ?? 0,
+        featured_media: imagenPrincipalId ?? mediaIds[0] ?? 0,
       }),
     });
 

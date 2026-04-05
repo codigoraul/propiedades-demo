@@ -93,6 +93,19 @@ import Breadcrumb from '../components/Breadcrumb.astro';
               <label for="descripcion">Descripción</label>
               <textarea id="descripcion" name="descripcion" rows={4} placeholder="Describe la propiedad: características, entorno, estado de conservación..."></textarea>
             </div>
+            <div class="form-group full" style="margin-top:1.2rem">
+              <label class="checkbox-label">
+                <input type="checkbox" name="destacada" value="1" id="destacada-check" />
+                <span>Destacar esta propiedad en el slider de inicio</span>
+              </label>
+              <p class="field-hint">Las propiedades destacadas aparecen en el carrusel principal de la página de inicio.</p>
+            </div>
+            <div class="form-group full imagen-destacada-group" id="imagen-destacada-group" style="display:none; margin-top:1rem">
+              <label for="imagen_principal_destacada">Imagen principal para portada y slider</label>
+              <input type="file" id="imagen_principal_destacada" name="imagen_principal_destacada" accept="image/jpeg,image/png,image/webp" />
+              <p class="field-hint">Sube una imagen horizontal de alta calidad para la portada (recomendado: mínimo 1200x800px). Esta será la imagen principal de la propiedad. Máximo 5MB.</p>
+              <div id="preview-destacada" class="preview-destacada"></div>
+            </div>
           </div>
         </div>
 
@@ -202,6 +215,35 @@ import Breadcrumb from '../components/Breadcrumb.astro';
   const MAX_FOTOS = 5;
   const MAX_MB    = 3;
 
+  // ── Toggle imagen destacada ───────────────────
+  const destacadaCheck = document.getElementById('destacada-check') as HTMLInputElement;
+  const imagenDestacadaGroup = document.getElementById('imagen-destacada-group');
+  const imagenDestacadaInput = document.getElementById('imagen_principal_destacada') as HTMLInputElement;
+  const previewDestacada = document.getElementById('preview-destacada');
+
+  destacadaCheck?.addEventListener('change', () => {
+    if (destacadaCheck.checked) {
+      imagenDestacadaGroup?.style.setProperty('display', 'flex');
+    } else {
+      imagenDestacadaGroup?.style.setProperty('display', 'none');
+      if (imagenDestacadaInput) imagenDestacadaInput.value = '';
+      if (previewDestacada) previewDestacada.innerHTML = '';
+    }
+  });
+
+  // Preview imagen destacada
+  imagenDestacadaInput?.addEventListener('change', () => {
+    if (!imagenDestacadaInput.files || !previewDestacada) return;
+    const file = imagenDestacadaInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewDestacada.innerHTML = `<img src="${e.target?.result}" alt="Imagen destacada" />`;
+    };
+    reader.readAsDataURL(file);
+  });
+
   // ── Preview de fotos ──────────────────────────
   function actualizarPreview(files: FileList) {
     if (!preview || !countEl || !placeholder) return;
@@ -263,6 +305,14 @@ import Breadcrumb from '../components/Breadcrumb.astro';
     for (const f of files) {
       if (f.size > MAX_MB * 1024 * 1024) {
         mostrarError(`La foto "${f.name}" supera los ${MAX_MB}MB.`); return;
+      }
+    }
+
+    // Validar imagen destacada
+    if (imagenDestacadaInput?.files && imagenDestacadaInput.files.length > 0) {
+      const imgDestacada = imagenDestacadaInput.files[0];
+      if (imgDestacada.size > 5 * 1024 * 1024) {
+        mostrarError('La imagen destacada no puede superar los 5MB.'); return;
       }
     }
 
@@ -359,6 +409,23 @@ import Breadcrumb from '../components/Breadcrumb.astro';
 .form-group textarea:focus { border-color: #C6A55C; background: #fff; }
 .form-group textarea { resize: vertical; }
 
+/* Checkbox */
+.checkbox-label {
+  display: flex; align-items: flex-start; gap: .75rem;
+  cursor: pointer; font-size: .92rem; color: #111827;
+  font-weight: 500;
+}
+.checkbox-label input[type="checkbox"] {
+  width: 20px; height: 20px; margin-top: .15rem;
+  cursor: pointer; accent-color: #C6A55C;
+}
+.checkbox-label span { flex: 1; }
+.field-hint {
+  font-size: .78rem; color: #6B7280;
+  margin-top: .5rem; line-height: 1.5;
+  padding-left: 2rem;
+}
+
 /* Upload area */
 .upload-area {
   border: 2px dashed rgba(26,26,26,.2);
@@ -454,7 +521,36 @@ import Breadcrumb from '../components/Breadcrumb.astro';
   padding: 1rem 1.2rem; margin-top: 1rem;
   font-size: .88rem; color: #DC2626;
 }
+.checkbox-label {
+  display: flex; align-items: center; gap: .75rem;
+  cursor: pointer; font-size: .92rem; color: #374151; font-weight: 500;
+}
+.checkbox-label input { width: 18px; height: 18px; accent-color: #C6A55C; cursor: pointer; }
+.field-hint { font-size: .75rem; color: #9CA3AF; margin-top: .4rem; }
 
+/* Imagen destacada */
+.imagen-destacada-group {
+  padding: 1.2rem;
+  background: #F5F0E8;
+  border: 1px solid rgba(26,26,26,.1);
+  border-radius: 4px;
+}
+.imagen-destacada-group input[type="file"] {
+  padding: .6rem;
+  background: #fff;
+  border: 1px solid rgba(26,26,26,.15);
+  cursor: pointer;
+}
+.preview-destacada {
+  margin-top: 1rem;
+}
+.preview-destacada img {
+  max-width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: cover;
+  border: 2px solid #C6A55C;
+}
 @media (max-width: 640px) {
   .form-grid { grid-template-columns: 1fr; }
   .form-section { padding: 1.5rem; }

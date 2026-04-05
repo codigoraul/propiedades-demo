@@ -10,7 +10,7 @@ const tipoOp    = params.get('tipo_operacion') || '';
 const tipoProp  = params.get('tipo_propiedad') || '';
 const precioMax = params.get('precio_max_uf')  || '';
 
-const destacadas = await getPropiedades({ destacada: 1, per_page: 5 });
+const destacadas = await getPropiedades({ destacada: true, per_page: 5 });
 
 const propiedades = await getPropiedades({
   tipo_operacion: tipoOp    || undefined,
@@ -39,33 +39,30 @@ const titulo = tipoOp === 'venta'    ? 'Propiedades en Venta'
 
   <section class="section">
     <div class="container">
-      <form class="filtros" method="get">
+      <form class="filtros" method="get" action="/busqueda">
         <div class="filtro-group">
           <label>Operación</label>
-          <select name="tipo_operacion" onchange="this.form.submit()">
-            <option value="" selected={!tipoOp}>Todas</option>
-            <option value="venta"    selected={tipoOp === 'venta'}>Venta</option>
-            <option value="arriendo" selected={tipoOp === 'arriendo'}>Arriendo</option>
+          <select name="tipo_operacion">
+            <option value="">Todas</option>
+            <option value="venta">Venta</option>
+            <option value="arriendo">Arriendo</option>
           </select>
         </div>
         <div class="filtro-group">
           <label>Tipo</label>
-          <select name="tipo_propiedad" onchange="this.form.submit()">
-            <option value="" selected={!tipoProp}>Todos</option>
-            <option value="casa"         selected={tipoProp === 'casa'}>Casa</option>
-            <option value="departamento" selected={tipoProp === 'departamento'}>Departamento</option>
-            <option value="terreno"      selected={tipoProp === 'terreno'}>Terreno</option>
-            <option value="oficina"      selected={tipoProp === 'oficina'}>Oficina</option>
+          <select name="tipo_propiedad">
+            <option value="">Todos</option>
+            <option value="casa">Casa</option>
+            <option value="departamento">Departamento</option>
+            <option value="terreno">Terreno</option>
+            <option value="oficina">Oficina</option>
           </select>
         </div>
         <div class="filtro-group">
           <label>Precio máx. UF</label>
-          <input type="number" name="precio_max_uf" value={precioMax} placeholder="Sin límite" min="1" />
+          <input type="number" name="precio_max_uf" placeholder="Sin límite" min="1" />
         </div>
         <button type="submit" class="btn-filtrar">Filtrar</button>
-        {(tipoOp || tipoProp || precioMax) && (
-          <a href="/" class="btn-limpiar">✕ Limpiar</a>
-        )}
       </form>
 
       {propiedades.length > 0 ? (
@@ -86,8 +83,8 @@ const titulo = tipoOp === 'venta'    ? 'Propiedades en Venta'
 <style>
 /* ── Paleta Gris Carbón + Cobre ── */
 .page-header {
-  background: #1C1C1E;
-  border-bottom: 1px solid #2C2C2E;
+  background: #F5F5F5;
+  border-bottom: 1px solid #E0E0E0;
 }
 .page-header-inner {
   max-width: 1280px;
@@ -97,10 +94,12 @@ const titulo = tipoOp === 'venta'    ? 'Propiedades en Venta'
 .page-header-inner h1 {
   font-family: 'Playfair Display', serif;
   font-size: clamp(1.8rem, 3vw, 2.5rem);
-  color: #F2EDE8; margin-bottom: .4rem;
+  color: #1A1A1A;
+  margin-bottom: .4rem;
 }
 .page-header-inner p {
-  color: rgba(242,237,232,.35); font-size: .88rem;
+  color: #666;
+  font-size: .88rem;
 }
 
 .section { padding: 2.5rem 0 5rem; background: #F5F2EE; }
