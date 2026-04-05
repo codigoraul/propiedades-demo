@@ -5,14 +5,8 @@ import PropCard from '../../components/PropCard.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
 import { getPropiedades } from '../../lib/wp-api.js';
 
-const params    = Astro.url.searchParams;
-const tipoProp  = params.get('tipo_propiedad') || '';
-const precioMax = params.get('precio_max_uf')  || '';
-
 const propiedades = await getPropiedades({
   tipo_operacion: 'venta',
-  tipo_propiedad: tipoProp  || undefined,
-  precio_max_uf:  precioMax ? Number(precioMax) : undefined,
   per_page: 24,
 });
 ---
@@ -30,30 +24,6 @@ const propiedades = await getPropiedades({
 
   <section class="section">
     <div class="container">
-
-      <form class="filtros" method="get">
-        <div class="filtro-group">
-          <label>Tipo</label>
-          <select name="tipo_propiedad" onchange="this.form.submit()">
-            <option value="" selected={!tipoProp}>Todos</option>
-            <option value="casa"            selected={tipoProp === 'casa'}>Casa</option>
-            <option value="departamento"    selected={tipoProp === 'departamento'}>Departamento</option>
-            <option value="terreno"         selected={tipoProp === 'terreno'}>Terreno</option>
-            <option value="oficina"         selected={tipoProp === 'oficina'}>Oficina</option>
-            <option value="local_comercial" selected={tipoProp === 'local_comercial'}>Local Comercial</option>
-            <option value="parcela"         selected={tipoProp === 'parcela'}>Parcela</option>
-          </select>
-        </div>
-        <div class="filtro-group">
-          <label>Precio máx. UF</label>
-          <input type="number" name="precio_max_uf" value={precioMax} placeholder="Sin límite" min="1" />
-        </div>
-        <button type="submit" class="btn-filtrar">Filtrar</button>
-        {(tipoProp || precioMax) && (
-          <a href="/propiedades/venta" class="btn-limpiar">✕ Limpiar</a>
-        )}
-      </form>
-
       {propiedades.length > 0 ? (
         <div class="props-grid">
           {propiedades.map(prop => <PropCard prop={prop} />)}
