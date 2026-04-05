@@ -23,6 +23,10 @@ jobs:
         run: npm ci
       
       - name: Build Astro site
+        env:
+          WP_API_URL: ${{ secrets.WP_API_URL }}
+          WP_APP_USER: ${{ secrets.WP_APP_USER }}
+          WP_APP_PASS: ${{ secrets.WP_APP_PASS }}
         run: npm run build
       
       - name: Deploy to FTP
