@@ -2,6 +2,7 @@
 // src/components/PropCard.astro
 import { formatUF, whatsappLink } from '../lib/wp-api.js';
 
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const { prop } = Astro.props;
 const acf = prop.acf ?? {};
 const titulo = prop.title?.rendered ?? 'Propiedad';
@@ -12,7 +13,7 @@ const precio = acf.tipo_operacion === 'arriendo'
 ---
 
 <article class="prop-card">
-  <a href={`/propiedades/${prop.slug}`} class="prop-img-link">
+  <a href={`${base}/propiedades/${prop.slug}`} class="prop-img-link">
     <div class="prop-img">
       <img src={imagen} alt={titulo} loading="lazy" />
       <span class={`prop-badge ${acf.tipo_operacion}`}>
@@ -24,7 +25,7 @@ const precio = acf.tipo_operacion === 'arriendo'
   <div class="prop-body">
     <div class="prop-precio">{precio}</div>
     <h3 class="prop-titulo">
-      <a href={`/propiedades/${prop.slug}`}>{titulo}</a>
+      <a href={`${base}/propiedades/${prop.slug}`}>{titulo}</a>
     </h3>
     <p class="prop-ubicacion">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -39,7 +40,7 @@ const precio = acf.tipo_operacion === 'arriendo'
     </div>
 
     <div class="prop-footer">
-      <a href={`/propiedades/${prop.slug}`} class="btn-ver">Ver ficha</a>
+      <a href={`${base}/propiedades/${prop.slug}`} class="btn-ver">Ver ficha</a>
       {acf.corredor_telefono && (
         <a href={whatsappLink(acf.corredor_telefono, titulo)} target="_blank" rel="noopener" class="btn-wp">
           WhatsApp

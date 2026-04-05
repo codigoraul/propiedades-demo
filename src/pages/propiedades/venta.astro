@@ -35,7 +35,7 @@ const propiedades = await getPropiedades({
           </div>
           <h3>No se encontraron propiedades en venta</h3>
           <p>Intenta con otros filtros o explora todas las propiedades.</p>
-          <a href="/propiedades" class="btn-ver-todas">Ver todas las propiedades</a>
+          <a href={`${import.meta.env.BASE_URL}propiedades`} class="btn-ver-todas">Ver todas las propiedades</a>
         </div>
       )}
 

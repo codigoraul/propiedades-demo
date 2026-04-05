@@ -185,7 +185,7 @@ import Breadcrumb from '../components/Breadcrumb.astro';
         </div>
         <h2>¡Propiedad enviada con éxito!</h2>
         <p>Revisaremos tu publicación y la aprobaremos en menos de 24 horas. Te contactaremos al número que indicaste.</p>
-        <a href="/propiedades" class="btn-volver">Ver propiedades publicadas</a>
+        <a href={`${import.meta.env.BASE_URL}propiedades`} class="btn-volver">Ver propiedades publicadas</a>
       </div>
 
       <!-- Mensaje de error -->

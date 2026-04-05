@@ -75,8 +75,8 @@ import Breadcrumb from '../components/Breadcrumb.astro';
         <h2>¿Tienes una propiedad para vender o arrendar?</h2>
         <p>Contáctanos y nuestro equipo te asesorará sin compromiso.</p>
         <div class="cta-btns">
-          <a href="/contacto" class="btn-primary">Contactar ahora</a>
-          <a href="/propiedades" class="btn-secondary">Ver propiedades</a>
+          <a href={`${import.meta.env.BASE_URL}contacto`} class="btn-primary">Contactar ahora</a>
+          <a href={`${import.meta.env.BASE_URL}propiedades`} class="btn-secondary">Ver propiedades</a>
         </div>
       </div>
 

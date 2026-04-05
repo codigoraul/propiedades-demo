@@ -1,5 +1,6 @@
 ---
 // src/components/SliderHero.astro
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const { propiedades } = Astro.props;
 
 const badgeLabel = (op: string) =>
@@ -59,7 +60,7 @@ const badgeLabel = (op: string) =>
               )}
             </div>
             <div class="slide-btns">
-              <a href={`/propiedades/${prop.slug}`} class="btn-slide-ver">Ver propiedad</a>
+              <a href={`${base}/propiedades/${prop.slug}`} class="btn-slide-ver">Ver propiedad</a>
               {acf.corredor_telefono && (
                 <a
                   href={`https://wa.me/${acf.corredor_telefono.replace(/\D/g,'')}?text=${encodeURIComponent('Hola, me interesa la propiedad: ' + (prop.title?.rendered ?? ''))}`}

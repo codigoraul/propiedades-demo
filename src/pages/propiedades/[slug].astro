@@ -71,8 +71,8 @@ const imagenesJSON = JSON.stringify(todasLasImagenes);
 
   <!-- BREADCRUMB -->
   <nav class="breadcrumb" aria-label="Navegación">
-    <a href="/">Inicio</a> /
-    <a href="/propiedades">Propiedades</a> /
+    <a href={`${import.meta.env.BASE_URL}`}>Inicio</a> /
+    <a href={`${import.meta.env.BASE_URL}propiedades`}>Propiedades</a> /
     <span>{titulo}</span>
   </nav>
 

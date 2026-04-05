@@ -1,22 +1,23 @@
 ---
 // src/components/Header.astro
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const currentPath = Astro.url.pathname;
-const isProps = currentPath.startsWith('/propiedades');
+const isProps = currentPath.includes('/propiedades');
 ---
 
 <header class="header" id="header">
   <div class="header-inner">
 
     <!-- Logo -->
-    <a href="/" class="header-logo" aria-label="Inicio">
-      <img src="/logo-inmopremiun.svg" alt="InmoPremium" class="logo-img" />
+    <a href={`${base}/`} class="header-logo" aria-label="Inicio">
+      <img src={`${base}/logo-inmopremiun.svg`} alt="InmoPremium" class="logo-img" />
     </a>
 
     <!-- Nav desktop -->
     <nav class="nav-links" aria-label="Navegación principal">
 
-      <a href="/" class={`nav-link ${currentPath === '/' ? 'active' : ''}`}>Inicio</a>
-      <a href="/nosotros" class={`nav-link ${currentPath === '/nosotros' ? 'active' : ''}`}>Nosotros</a>
+      <a href={`${base}/`} class={`nav-link ${currentPath === `${base}/` ? 'active' : ''}`}>Inicio</a>
+      <a href={`${base}/nosotros`} class={`nav-link ${currentPath.includes('/nosotros') ? 'active' : ''}`}>Nosotros</a>
 
       <!-- Dropdown Propiedades -->
       <div class="dropdown">
@@ -25,27 +26,27 @@ const isProps = currentPath.startsWith('/propiedades');
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="dropdown-menu">
-          <a href="/propiedades" class={`dropdown-item ${currentPath === '/propiedades' ? 'current' : ''}`}>
+          <a href={`${base}/propiedades`} class={`dropdown-item ${currentPath.endsWith('/propiedades') || currentPath.endsWith('/propiedades/') ? 'current' : ''}`}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             Todas las propiedades
           </a>
-          <a href="/propiedades/venta" class={`dropdown-item ${currentPath === '/propiedades/venta' ? 'current' : ''}`}>
+          <a href={`${base}/propiedades/venta`} class={`dropdown-item ${currentPath.includes('/propiedades/venta') ? 'current' : ''}`}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             En Venta
           </a>
-          <a href="/propiedades/arriendo" class={`dropdown-item ${currentPath === '/propiedades/arriendo' ? 'current' : ''}`}>
+          <a href={`${base}/propiedades/arriendo`} class={`dropdown-item ${currentPath.includes('/propiedades/arriendo') ? 'current' : ''}`}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
             En Arriendo
           </a>
         </div>
       </div>
 
-      <a href="/contacto" class={`nav-link ${currentPath === '/contacto' ? 'active' : ''}`}>Contacto</a>
+      <a href={`${base}/contacto`} class={`nav-link ${currentPath.includes('/contacto') ? 'active' : ''}`}>Contacto</a>
 
     </nav>
 
     <!-- CTA -->
-    <a href="/contacto" class="btn-header">Contactar</a>
+    <a href={`${base}/contacto`} class="btn-header">Contactar</a>
 
     <!-- Hamburger mobile -->
     <button class="hamburger" id="hamburger" aria-label="Abrir menú">
@@ -55,19 +56,19 @@ const isProps = currentPath.startsWith('/propiedades');
 
   <!-- Mobile menu -->
   <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
-    <a href="/" class={`mobile-link ${currentPath === '/' ? 'active' : ''}`}>Inicio</a>
-    <a href="/nosotros" class={`mobile-link ${currentPath === '/nosotros' ? 'active' : ''}`}>Nosotros</a>
+    <a href={`${base}/`} class={`mobile-link ${currentPath === `${base}/` ? 'active' : ''}`}>Inicio</a>
+    <a href={`${base}/nosotros`} class={`mobile-link ${currentPath.includes('/nosotros') ? 'active' : ''}`}>Nosotros</a>
 
     <!-- Submenu móvil propiedades -->
     <div class="mobile-group">
       <span class="mobile-group-label">Propiedades</span>
-      <a href="/propiedades" class={`mobile-sublink ${currentPath === '/propiedades' ? 'active' : ''}`}>Todas las propiedades</a>
-      <a href="/propiedades/venta" class={`mobile-sublink ${currentPath === '/propiedades/venta' ? 'active' : ''}`}>En Venta</a>
-      <a href="/propiedades/arriendo" class={`mobile-sublink ${currentPath === '/propiedades/arriendo' ? 'active' : ''}`}>En Arriendo</a>
+      <a href={`${base}/propiedades`} class={`mobile-sublink ${currentPath.endsWith('/propiedades') || currentPath.endsWith('/propiedades/') ? 'active' : ''}`}>Todas las propiedades</a>
+      <a href={`${base}/propiedades/venta`} class={`mobile-sublink ${currentPath.includes('/propiedades/venta') ? 'active' : ''}`}>En Venta</a>
+      <a href={`${base}/propiedades/arriendo`} class={`mobile-sublink ${currentPath.includes('/propiedades/arriendo') ? 'active' : ''}`}>En Arriendo</a>
     </div>
 
-    <a href="/contacto" class={`mobile-link ${currentPath === '/contacto' ? 'active' : ''}`}>Contacto</a>
-    <a href="/contacto" class="btn-mobile">Contactar</a>
+    <a href={`${base}/contacto`} class={`mobile-link ${currentPath.includes('/contacto') ? 'active' : ''}`}>Contacto</a>
+    <a href={`${base}/contacto`} class="btn-mobile">Contactar</a>
   </div>
 </header>
 
