@@ -3,9 +3,10 @@
 import Layout from '../../layouts/Layout.astro';
 import PropCard from '../../components/PropCard.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
+import Buscador from '../../components/Buscador.astro';
 import { getPropiedades } from '../../lib/wp-api.js';
 
-const propiedades = await getPropiedades({ per_page: 24 });
+const propiedades = await getPropiedades({ per_page: 200 });
 const titulo = 'Todas las Propiedades';
 const subtitulo = `${propiedades.length} propiedad${propiedades.length !== 1 ? 'es' : ''} encontrada${propiedades.length !== 1 ? 's' : ''}`;
 ---
@@ -21,12 +22,30 @@ const subtitulo = `${propiedades.length} propiedad${propiedades.length !== 1 ? '
     items={[]}
   />
 
+  <Buscador propiedades={propiedades} target="grid-propiedades" variant="plain" />
+
   <section class="section">
     <div class="container">
       {propiedades.length > 0 ? (
-        <div class="props-grid">
-          {propiedades.map(prop => <PropCard prop={prop} />)}
-        </div>
+        <>
+          <div class="results-bar">
+            <p class="results-text">
+              Mostrando <span class="results-number">{propiedades.length}</span> propiedad{propiedades.length !== 1 ? 'es' : ''} disponible{propiedades.length !== 1 ? 's' : ''}
+            </p>
+            <div class="results-line" aria-hidden="true"></div>
+          </div>
+          <div class="props-grid" id="grid-propiedades">
+            {propiedades.map(prop => <PropCard prop={prop} />)}
+          </div>
+
+          <div id="sin-resultados" class="empty" hidden>
+            <div class="empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            </div>
+            <h3>Sin coincidencias</h3>
+            <p>Prueba quitando algún filtro o ampliando el rango de precio.</p>
+          </div>
+        </>
       ) : (
         <div class="empty">
           <div class="empty-icon">
@@ -49,7 +68,7 @@ const subtitulo = `${propiedades.length} propiedad${propiedades.length !== 1 ? '
   background: #F5F0E8;
 }
 .container {
-  max-width: 1280px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 0 3rem;
 }
@@ -101,12 +120,39 @@ const subtitulo = `${propiedades.length} propiedad${propiedades.length !== 1 ? '
 }
 .btn-limpiar:hover { border-color: #1E2433; color: #1E2433; }
 
+/* Results bar */
+.results-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+.results-text {
+  flex-shrink: 0;
+  font-size: .82rem;
+  font-weight: 500;
+  color: #7A7269;
+  letter-spacing: .02em;
+}
+.results-number {
+  font-weight: 700;
+  color: #1C1C1E;
+}
+.results-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, #D9D2C8, transparent);
+}
+
 /* Grid */
 .props-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.8rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.75rem;
 }
+@media (max-width: 1280px) { .props-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px)  { .props-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; } }
+@media (max-width: 560px)  { .props-grid { grid-template-columns: 1fr; } }
 
 /* Empty state */
 .empty {

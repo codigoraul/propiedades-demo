@@ -3,12 +3,71 @@
 import Layout from '../layouts/Layout.astro';
 import PropCard from '../components/PropCard.astro';
 import SliderHero from '../components/SliderHero.astro';
-import { getPropiedades } from '../lib/wp-api.js';
+import Buscador from '../components/Buscador.astro';
+import { getPropiedades, labelTipo } from '../lib/wp-api.js';
 
-const destacadas = await getPropiedades({ destacada: true, per_page: 5 });
-const propiedades = await getPropiedades({ per_page: 12 });
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-const titulo = 'Todas las Propiedades';
+const destacadas  = await getPropiedades({ destacada: true, per_page: 5 });
+const todas       = await getPropiedades({ per_page: 100 });
+const propiedades = todas.slice(0, 8); // 4 columnas × 2 filas
+
+// Categorías reales presentes en el catálogo
+const conteoTipos = todas.reduce((acc, p) => {
+  const t = p.acf?.tipo_propiedad;
+  if (t) acc[t] = (acc[t] ?? 0) + 1;
+  return acc;
+}, {});
+const categorias = Object.entries(conteoTipos)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 6);
+
+const iconoTipo = {
+  casa: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z',
+  departamento: 'M3 21h18M5 21V4a1 1 0 011-1h8a1 1 0 011 1v17M15 21V9h4v12M8 7h2M8 11h2M8 15h2',
+  terreno: 'M3 20h18M5 20V9l7-5 7 5v11',
+  oficina: 'M4 21V6a1 1 0 011-1h6v16M11 21h9V11h-9M7 9h2M7 13h2M7 17h2',
+  local_comercial: 'M3 9l1.5-5h15L21 9M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1zM9 21v-7h6v7',
+  bodega: 'M3 21V8l9-5 9 5v13M8 21v-8h8v8',
+  parcela: 'M3 20h18M6 20V10M12 20V6M18 20v-8',
+};
+
+const estadisticas = [
+  { valor: `${todas.length}+`, label: 'Propiedades publicadas' },
+  { valor: '15', label: 'Años en el rubro' },
+  { valor: '480+', label: 'Operaciones cerradas' },
+  { valor: '48h', label: 'Respuesta promedio' },
+];
+
+const beneficios = [
+  {
+    titulo: 'Tasación sin costo',
+    texto: 'Analizamos el mercado de tu sector y te entregamos un rango de precio realista antes de publicar.',
+    icono: 'M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6',
+  },
+  {
+    titulo: 'Publicación multiportal',
+    texto: 'Tu propiedad aparece en los principales portales del país y en nuestras redes, con fotografía profesional.',
+    icono: 'M2 12h20M12 2a15 15 0 010 20 15 15 0 010-20zM12 2a10 10 0 000 20',
+  },
+  {
+    titulo: 'Filtro de interesados',
+    texto: 'Solo coordinamos visitas con compradores calificados. Tú no pierdes tiempo con curiosos.',
+    icono: 'M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3',
+  },
+  {
+    titulo: 'Acompañamiento legal',
+    texto: 'Promesa, escritura e inscripción en el Conservador coordinadas por nuestro equipo.',
+    icono: 'M12 3l8 4v6c0 4.4-3.4 8.5-8 9-4.6-.5-8-4.6-8-9V7z',
+  },
+];
+
+const pasos = [
+  { n: '01', titulo: 'Conversamos', texto: 'Nos cuentas qué buscas o qué quieres vender. Sin compromiso.' },
+  { n: '02', titulo: 'Visitamos y tasamos', texto: 'Vemos la propiedad, tomamos fotos y definimos el precio.' },
+  { n: '03', titulo: 'Publicamos', texto: 'Salimos a mercado con ficha completa y difusión pagada.' },
+  { n: '04', titulo: 'Cerramos', texto: 'Negociación, promesa y escritura con respaldo legal.' },
+];
 ---
 
 <Layout title="Propiedades en venta y arriendo en Chile">
@@ -17,106 +76,396 @@ const titulo = 'Todas las Propiedades';
     <SliderHero propiedades={destacadas} />
   )}
 
-  <div class="page-header">
-    <div class="page-header-inner">
-      <h1>{titulo}</h1>
-      <p>{propiedades.length} propiedad{propiedades.length !== 1 ? 'es' : ''} encontrada{propiedades.length !== 1 ? 's' : ''}</p>
-    </div>
-  </div>
+  <Buscador propiedades={todas} target="grid-propiedades" variant="hero" />
 
-  <section class="section">
+  <section class="section section--props" id="propiedades">
     <div class="container">
 
-      {propiedades.length > 0 ? (
-        <div class="props-grid">
-          {propiedades.map(prop => <PropCard prop={prop} />)}
+      <div class="head">
+        <div>
+          <span class="section-tag">Catálogo</span>
+          <h2>Propiedades disponibles</h2>
+          <p class="head-sub">{todas.length} propiedad{todas.length !== 1 ? 'es' : ''} publicada{todas.length !== 1 ? 's' : ''} en venta y arriendo</p>
         </div>
+        <a href={`${base}/propiedades`} class="btn-outline head-cta">
+          Ver todas
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      {propiedades.length > 0 ? (
+        <>
+          <div class="props-grid" id="grid-propiedades">
+            {propiedades.map(prop => <PropCard prop={prop} />)}
+          </div>
+
+          <div id="sin-resultados" class="empty" hidden>
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            </div>
+            <h3>Sin coincidencias</h3>
+            <p>Prueba con menos filtros o revisa el catálogo completo.</p>
+            <a href={`${base}/propiedades`} class="btn-solid">Ver todas las propiedades</a>
+          </div>
+
+          {todas.length > propiedades.length && (
+            <div class="ver-todas" data-hide-on-filter>
+              <span class="ver-todas-line" aria-hidden="true"></span>
+              <a href={`${base}/propiedades`} class="btn-solid">
+                Ver todas las propiedades ({todas.length})
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+              </a>
+              <span class="ver-todas-line" aria-hidden="true"></span>
+            </div>
+          )}
+        </>
       ) : (
         <div class="empty">
-          <p>No se encontraron propiedades con esos filtros.</p>
-          <a href={`${import.meta.env.BASE_URL}`}>Ver todas</a>
+          <p>No hay propiedades publicadas por el momento.</p>
         </div>
       )}
+    </div>
+  </section>
+
+  {categorias.length > 0 && (
+    <section class="section section--cats">
+      <div class="container">
+        <div class="head">
+          <div>
+            <span class="section-tag">Explora por tipo</span>
+            <h2>¿Qué estás buscando?</h2>
+          </div>
+        </div>
+        <div class="cats-grid">
+          {categorias.map(([tipo, n]) => (
+            <a href={`${base}/propiedades`} class="cat-card">
+              <span class="cat-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d={iconoTipo[tipo] ?? iconoTipo.casa} />
+                </svg>
+              </span>
+              <span class="cat-nombre">{labelTipo(tipo)}</span>
+              <span class="cat-n">{n} {n === 1 ? 'propiedad' : 'propiedades'}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="banner">
+    <div class="banner-bg" aria-hidden="true"></div>
+    <div class="container banner-inner">
+      <div class="banner-txt">
+        <span class="section-tag banner-tag">Vende con nosotros</span>
+        <h2>¿Cuánto vale realmente tu propiedad?</h2>
+        <p>Tasación gratuita en 48 horas, con estudio de precios reales de tu sector — no de lo que pide el vecino. Sin exclusividad forzada ni letra chica.</p>
+        <div class="banner-acciones">
+          <a href={`${base}/contacto`} class="btn-gold">Solicitar tasación gratuita</a>
+          <a href={`${base}/nosotros`} class="btn-ghost">Cómo trabajamos</a>
+        </div>
+      </div>
+      <ul class="banner-stats">
+        {estadisticas.map(e => (
+          <li>
+            <strong>{e.valor}</strong>
+            <span>{e.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--benef">
+    <div class="container">
+      <div class="head head--centro">
+        <span class="section-tag">Por qué nosotros</span>
+        <h2>Corretaje sin sorpresas</h2>
+      </div>
+      <div class="benef-grid">
+        {beneficios.map(b => (
+          <article class="benef">
+            <span class="benef-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d={b.icono} />
+              </svg>
+            </span>
+            <h3>{b.titulo}</h3>
+            <p>{b.texto}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--pasos">
+    <div class="container">
+      <div class="head head--centro">
+        <span class="section-tag">El proceso</span>
+        <h2>Cuatro pasos, cero improvisación</h2>
+      </div>
+      <ol class="pasos-grid">
+        {pasos.map(p => (
+          <li class="paso">
+            <span class="paso-n">{p.n}</span>
+            <h3>{p.titulo}</h3>
+            <p>{p.texto}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="cta-final">
+    <div class="container cta-inner">
+      <div>
+        <h2>¿Buscas algo que no está publicado?</h2>
+        <p>Tenemos propiedades en cartera privada. Cuéntanos qué necesitas y te avisamos apenas entre algo que calce.</p>
+      </div>
+      <a href={`${base}/contacto`} class="btn-gold">Hablar con un corredor</a>
     </div>
   </section>
 
 </Layout>
 
 <style>
-/* ── Paleta Gris Carbón + Cobre ── */
-.page-header {
-  background: #F5F5F5;
-  border-bottom: 1px solid #E0E0E0;
-}
-.page-header-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2.5rem 3rem;
-}
-.page-header-inner h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-  color: #1A1A1A;
-  margin-bottom: .4rem;
-}
-.page-header-inner p {
-  color: #666;
-  font-size: .88rem;
-}
-
-.section { padding: 2.5rem 0 5rem; background: #F5F2EE; }
-
+/* ── Base ─────────────────────────────────── */
 .container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 3rem;
 }
 
-.filtros {
-  display: flex; align-items: flex-end; gap: 1rem;
-  flex-wrap: wrap; margin-bottom: 2.5rem;
-  padding: 1.5rem; background: #EDE8E2;
-  border: 1px solid #D9D2C8;
-}
-.filtro-group { display: flex; flex-direction: column; gap: .3rem; }
-.filtro-group label {
-  font-size: .68rem; text-transform: uppercase;
-  letter-spacing: .1em; color: #7A7269;
-}
-.filtro-group select, .filtro-group input {
-  padding: .6rem .9rem;
-  border: 1px solid #C8C0B4;
-  background: #fff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: .88rem; outline: none; min-width: 150px;
-  color: #1C1C1E;
-}
-.filtro-group select:focus, .filtro-group input:focus {
-  border-color: #B87333;
-}
-.btn-filtrar {
-  padding: .6rem 1.5rem; background: #1C1C1E; color: #F2EDE8;
-  border: none; font-family: 'DM Sans', sans-serif;
-  font-weight: 500; cursor: pointer; transition: background .2s;
-}
-.btn-filtrar:hover { background: #B87333; }
-.btn-limpiar {
-  padding: .6rem 1rem; color: #7A7269; font-size: .82rem;
-  text-decoration: none; border: 1px solid #C8C0B4;
-  transition: all .2s;
-}
-.btn-limpiar:hover { border-color: #1C1C1E; color: #1C1C1E; }
+/* Solo la muestra de propiedades va ancha */
+.section--props .container { max-width: 1600px; }
 
+.section { padding: 4.5rem 0; }
+.section--cats {
+  background: #fff;
+  border-top: 1px solid rgba(26,26,26,.07);
+  border-bottom: 1px solid rgba(26,26,26,.07);
+}
+.section--props { background: #F5F0E8; padding-top: 3.5rem; }
+.section--benef { background: #fff; }
+.section--pasos { background: #F5F0E8; }
+
+.head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 2rem; flex-wrap: wrap; margin-bottom: 2.5rem;
+}
+.head--centro { flex-direction: column; align-items: center; text-align: center; }
+.head h2 { margin-bottom: .3rem; }
+.head-sub { font-size: .88rem; color: #7A7269; }
+
+.btn-outline {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .7rem 1.5rem;
+  border: 1px solid rgba(26,26,26,.18);
+  color: #1E2433; background: transparent;
+  font-size: .78rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  transition: all .25s; border-radius: 2px;
+}
+.btn-outline:hover { background: #1E2433; color: #F5F0E8; border-color: #1E2433; }
+
+.btn-solid {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .85rem 2rem;
+  background: #1E2433; color: #F5F0E8;
+  font-size: .78rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  transition: all .25s; border-radius: 2px;
+  white-space: nowrap;
+}
+.btn-solid:hover { background: #C6A55C; color: #1A1A1A; }
+
+.btn-gold {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: .9rem 2rem;
+  background: #C6A55C; color: #1A1A1A;
+  font-size: .8rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  transition: all .25s; border-radius: 2px;
+}
+.btn-gold:hover { background: #fff; }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: .9rem 1.8rem;
+  border: 1px solid rgba(255,255,255,.28);
+  color: #F5F0E8;
+  font-size: .8rem; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  transition: all .25s; border-radius: 2px;
+}
+.btn-ghost:hover { border-color: #C6A55C; color: #C6A55C; }
+
+/* ── Categorías ───────────────────────────── */
+.cats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+.cat-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: .55rem;
+  padding: 1.5rem 1.4rem;
+  background: #FAF7F2;
+  border: 1px solid rgba(26,26,26,.08);
+  transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s, border-color .35s;
+}
+.cat-card:hover {
+  transform: translateY(-4px);
+  background: #fff;
+  border-color: #C6A55C;
+  box-shadow: 0 16px 34px rgba(28,28,30,.09);
+}
+.cat-icon { color: #C6A55C; }
+.cat-nombre {
+  font-weight: 700; font-size: .95rem; color: #1E2433;
+  letter-spacing: -.01em;
+}
+.cat-n { font-size: .74rem; color: #9A958D; }
+
+/* ── Grid de propiedades: 4 columnas ──────── */
 .props-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.75rem;
+}
+
+.ver-todas {
+  display: flex; align-items: center; gap: 1.75rem;
+  margin-top: 3.25rem;
+}
+.ver-todas-line {
+  flex: 1; height: 1px;
+  background: rgba(26,26,26,.12);
+}
+
+/* ── Vacío ────────────────────────────────── */
+.empty { text-align: center; padding: 4rem 2rem; color: #7A7269; }
+.empty-icon {
+  width: 72px; height: 72px; margin: 0 auto 1.25rem;
+  background: #E8E4DC; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #C6A55C;
+}
+.empty h3 { color: #1E2433; margin-bottom: .5rem; }
+.empty p { margin-bottom: 1.5rem; font-size: .9rem; }
+
+/* ── Banner ───────────────────────────────── */
+.banner {
+  position: relative;
+  padding: 5rem 0;
+  background: #14181F;
+  overflow: hidden;
+}
+.banner-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(900px 420px at 12% 0%, rgba(198,165,92,.20), transparent 65%),
+    radial-gradient(700px 380px at 92% 100%, rgba(198,165,92,.10), transparent 60%);
+}
+.banner-inner {
+  position: relative;
+  display: grid; grid-template-columns: 1.25fr 1fr;
+  gap: 4rem; align-items: center;
+}
+.banner-tag { color: #C6A55C; }
+.banner h2 { color: #F5F0E8; margin-bottom: .9rem; max-width: 18ch; }
+.banner p {
+  color: rgba(245,240,232,.62);
+  max-width: 54ch; margin-bottom: 2rem; font-size: .95rem;
+}
+.banner-acciones { display: flex; gap: .8rem; flex-wrap: wrap; }
+
+.banner-stats {
+  list-style: none;
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,.09);
+  border: 1px solid rgba(255,255,255,.09);
+}
+.banner-stats li {
+  background: #14181F;
+  padding: 1.6rem 1.4rem;
+  display: flex; flex-direction: column; gap: .25rem;
+}
+.banner-stats strong {
+  font-size: 2rem; font-weight: 800; color: #C6A55C;
+  letter-spacing: -.03em; line-height: 1;
+}
+.banner-stats span {
+  font-size: .74rem; letter-spacing: .06em;
+  text-transform: uppercase; color: rgba(245,240,232,.45);
+}
+
+/* ── Beneficios ───────────────────────────── */
+.benef-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
 }
-.empty { text-align: center; padding: 4rem; color: #7A7269; }
-.empty a { color: #B87333; }
+.benef { padding-top: 1.5rem; border-top: 2px solid #EDE8E2; transition: border-color .3s; }
+.benef:hover { border-color: #C6A55C; }
+.benef-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; margin-bottom: 1rem;
+  background: #F5F0E8; color: #C6A55C;
+}
+.benef h3 { font-size: 1.02rem; font-weight: 700; color: #1E2433; margin-bottom: .5rem; }
+.benef p { font-size: .87rem; line-height: 1.7; }
 
-@media (max-width: 768px) {
-  .page-header-inner { padding: 2rem 1.5rem; }
+/* ── Pasos ────────────────────────────────── */
+.pasos-grid {
+  list-style: none;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+.paso {
+  background: #fff; padding: 1.9rem 1.6rem;
+  border: 1px solid rgba(26,26,26,.07);
+  position: relative;
+}
+.paso-n {
+  display: block;
+  font-size: 2.1rem; font-weight: 800; line-height: 1;
+  color: #EDE4D2; letter-spacing: -.04em; margin-bottom: .8rem;
+}
+.paso h3 { font-size: 1rem; font-weight: 700; color: #1E2433; margin-bottom: .45rem; }
+.paso p { font-size: .85rem; line-height: 1.65; }
+
+/* ── CTA final ────────────────────────────── */
+.cta-final { background: #fff; border-top: 1px solid rgba(26,26,26,.07); padding: 3.5rem 0; }
+.cta-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 2.5rem; flex-wrap: wrap;
+}
+.cta-final h2 { font-size: clamp(1.3rem, 2.2vw, 1.75rem); margin-bottom: .4rem; }
+.cta-final p { font-size: .9rem; max-width: 62ch; }
+
+/* ── Responsive ───────────────────────────── */
+@media (max-width: 1500px) {
+  .cats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 1280px) {
+  .props-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .benef-grid { grid-template-columns: repeat(2, 1fr); gap: 2rem 2.5rem; }
+  .pasos-grid { grid-template-columns: repeat(2, 1fr); }
+  .banner-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+}
+@media (max-width: 900px) {
   .container { padding: 0 1.5rem; }
+  .props-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+  .cats-grid { grid-template-columns: repeat(2, 1fr); }
+  .section { padding: 3.25rem 0; }
+  .head-cta { display: none; }
+}
+@media (max-width: 560px) {
+  .props-grid { grid-template-columns: 1fr; }
+  .banner-stats { grid-template-columns: 1fr; }
+  .pasos-grid { grid-template-columns: 1fr; }
+  .benef-grid { grid-template-columns: 1fr; }
+  .ver-todas-line { display: none; }
+  .btn-solid { width: 100%; justify-content: center; }
 }
 </style>

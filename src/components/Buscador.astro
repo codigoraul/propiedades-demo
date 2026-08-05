@@ -1,0 +1,282 @@
+---
+// src/components/Buscador.astro
+// Buscador + filtros. Funciona sobre las tarjetas ya renderizadas (sitio estático).
+import { labelTipo } from '../lib/wp-api.js';
+
+interface Props {
+  propiedades: any[];
+  /** id del contenedor .props-grid sobre el que filtra */
+  target?: string;
+  /** variante visual: 'hero' se superpone al slider, 'plain' va en flujo normal */
+  variant?: 'hero' | 'plain';
+}
+
+const { propiedades = [], target = 'grid-propiedades', variant = 'plain' } = Astro.props as Props;
+
+const uniq = (arr: any[]) => [...new Set(arr.filter(Boolean))].sort();
+
+const ciudades = uniq(propiedades.map(p => p.acf?.ciudad));
+const tipos    = uniq(propiedades.map(p => p.acf?.tipo_propiedad));
+const precios  = propiedades
+  .map(p => Number(p.acf?.tipo_operacion === 'arriendo' ? p.acf?.precio_arriendo_uf : p.acf?.precio_uf))
+  .filter(n => n > 0);
+const maxPrecio = precios.length ? Math.ceil(Math.max(...precios) / 1000) * 1000 : 30000;
+
+const tramos = [
+  Math.round(maxPrecio * 0.15),
+  Math.round(maxPrecio * 0.30),
+  Math.round(maxPrecio * 0.50),
+  Math.round(maxPrecio * 0.75),
+  maxPrecio,
+];
+---
+
+<section class={`buscador buscador--${variant}`} aria-label="Buscador de propiedades">
+  <div class="buscador-inner">
+
+    <form class="buscador-form" id="form-buscador" data-target={target} autocomplete="off">
+
+      <div class="campo campo--texto">
+        <label for="q">Buscar</label>
+        <div class="input-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="search" id="q" name="q" placeholder="Comuna, sector, código o palabra clave…" />
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="operacion">Operación</label>
+        <select id="operacion" name="operacion">
+          <option value="">Todas</option>
+          <option value="venta">Venta</option>
+          <option value="arriendo">Arriendo</option>
+          <option value="arriendo_temp">Arriendo temporal</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="tipo">Tipo</label>
+        <select id="tipo" name="tipo">
+          <option value="">Todos</option>
+          {tipos.map(t => <option value={t}>{labelTipo(t)}</option>)}
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="ciudad">Comuna</label>
+        <select id="ciudad" name="ciudad">
+          <option value="">Todas</option>
+          {ciudades.map(c => <option value={c}>{c}</option>)}
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="dorm">Dormitorios</label>
+        <select id="dorm" name="dorm">
+          <option value="">Cualquiera</option>
+          <option value="1">1+</option>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+          <option value="4">4+</option>
+          <option value="5">5+</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="precio">Precio hasta</label>
+        <select id="precio" name="precio">
+          <option value="">Sin límite</option>
+          {tramos.map(t => <option value={t}>UF {t.toLocaleString('es-CL')}</option>)}
+        </select>
+      </div>
+
+      <div class="campo campo--acciones">
+        <button type="submit" class="btn-buscar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          Buscar
+        </button>
+        <button type="reset" class="btn-limpiar-b">Limpiar</button>
+      </div>
+
+    </form>
+
+    <div class="buscador-estado" id="buscador-estado" hidden>
+      <span id="buscador-conteo"></span>
+      <button type="button" class="chip-reset" id="chip-reset">Quitar filtros</button>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById('form-buscador') as HTMLFormElement | null;
+  if (form) {
+    const gridId = form.dataset.target || 'grid-propiedades';
+    const grid = document.getElementById(gridId);
+    const estado = document.getElementById('buscador-estado');
+    const conteo = document.getElementById('buscador-conteo');
+    const chipReset = document.getElementById('chip-reset');
+
+    const norm = (s: string) =>
+      (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    function aplicar() {
+      if (!grid) return;
+      const data = new FormData(form as HTMLFormElement);
+      const q         = norm(String(data.get('q') || '')).trim();
+      const operacion = String(data.get('operacion') || '');
+      const tipo      = String(data.get('tipo') || '');
+      const ciudad    = String(data.get('ciudad') || '');
+      const dorm      = Number(data.get('dorm') || 0);
+      const precioMax = Number(data.get('precio') || 0);
+
+      const activo = !!(q || operacion || tipo || ciudad || dorm || precioMax);
+      const cards = Array.from(grid.querySelectorAll<HTMLElement>('[data-prop]'));
+      let visibles = 0;
+
+      cards.forEach(card => {
+        const d = card.dataset;
+        const precio = Number(d.precio || 0);
+        const ok =
+          (!q         || norm(d.buscable || '').includes(q)) &&
+          (!operacion || d.operacion === operacion) &&
+          (!tipo      || d.tipo === tipo) &&
+          (!ciudad    || d.ciudad === ciudad) &&
+          (!dorm      || Number(d.dorm || 0) >= dorm) &&
+          (!precioMax || (precio > 0 && precio <= precioMax));
+
+        card.hidden = !ok;
+        if (ok) visibles++;
+      });
+
+      // Ocultar el botón "ver todas" mientras hay filtros activos
+      document.querySelectorAll<HTMLElement>('[data-hide-on-filter]')
+        .forEach(el => { el.hidden = activo; });
+
+      const vacio = document.getElementById('sin-resultados');
+      if (vacio) vacio.hidden = visibles > 0;
+
+      if (estado && conteo) {
+        estado.hidden = !activo;
+        conteo.textContent = visibles === 0
+          ? 'Sin resultados para tu búsqueda'
+          : `${visibles} propiedad${visibles !== 1 ? 'es' : ''} coincide${visibles !== 1 ? 'n' : ''}`;
+      }
+    }
+
+    form.addEventListener('submit', e => { e.preventDefault(); aplicar(); });
+    form.addEventListener('change', aplicar);
+    form.querySelector('#q')?.addEventListener('input', aplicar);
+    form.addEventListener('reset', () => setTimeout(aplicar, 0));
+    chipReset?.addEventListener('click', () => { (form as HTMLFormElement).reset(); aplicar(); });
+  }
+</script>
+
+<style>
+.buscador { background: transparent; }
+
+.buscador--plain { padding: 2rem 0 0; }
+.buscador--hero  { margin-top: -2.25rem; position: relative; z-index: 20; }
+
+.buscador-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 3rem;
+}
+
+.buscador-form {
+  display: grid;
+  grid-template-columns: 1.7fr repeat(5, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+  background: #fff;
+  border: 1px solid rgba(26,26,26,.08);
+  box-shadow: 0 18px 44px rgba(28,28,30,.08);
+  padding: 1.4rem 1.6rem;
+}
+
+.campo { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+.campo label {
+  font-size: .65rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: #9A958D;
+}
+.campo select,
+.campo input {
+  width: 100%;
+  padding: .68rem .85rem;
+  border: 1px solid rgba(26,26,26,.14);
+  background: #fff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .87rem;
+  color: #1E2433;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  border-radius: 2px;
+}
+.campo select:focus,
+.campo input:focus {
+  border-color: #C6A55C;
+  box-shadow: 0 0 0 3px rgba(198,165,92,.15);
+}
+
+.input-icon { position: relative; }
+.input-icon svg {
+  position: absolute; left: .8rem; top: 50%;
+  transform: translateY(-50%);
+  color: #C6A55C; pointer-events: none;
+}
+.input-icon input { padding-left: 2.3rem; }
+
+.campo--acciones { flex-direction: row; gap: .5rem; align-items: stretch; }
+.btn-buscar {
+  display: inline-flex; align-items: center; gap: .45rem;
+  padding: .72rem 1.5rem;
+  background: #1E2433; color: #F5F0E8;
+  border: none; cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .78rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  transition: background .2s, color .2s;
+  border-radius: 2px;
+}
+.btn-buscar:hover { background: #C6A55C; color: #1A1A1A; }
+
+.btn-limpiar-b {
+  padding: .72rem 1rem;
+  background: transparent; color: #7A7269;
+  border: 1px solid rgba(26,26,26,.14);
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .78rem; font-weight: 600;
+  transition: all .2s; border-radius: 2px;
+}
+.btn-limpiar-b:hover { border-color: #1E2433; color: #1E2433; }
+
+.buscador-estado {
+  display: flex; align-items: center; gap: 1rem;
+  margin-top: 1rem;
+  font-size: .82rem; color: #7A7269;
+}
+.chip-reset {
+  background: none; border: none; cursor: pointer;
+  color: #C6A55C; font-weight: 700; font-size: .8rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+
+@media (max-width: 1400px) {
+  .buscador-form { grid-template-columns: 1.5fr repeat(3, 1fr); }
+  .campo--acciones { grid-column: 1 / -1; }
+  .btn-buscar { flex: 1; justify-content: center; }
+}
+@media (max-width: 900px) {
+  .buscador-inner { padding: 0 1.5rem; }
+  .buscador--hero { margin-top: 0; padding-top: 1.5rem; }
+  .buscador-form { grid-template-columns: 1fr 1fr; padding: 1.2rem; }
+  .campo--texto { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .buscador-form { grid-template-columns: 1fr; }
+}
+</style>

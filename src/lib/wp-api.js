@@ -75,31 +75,16 @@ export async function getPropiedades(filtros = {}) {
 
   let propiedades = await wpFetch(`/propiedades?${params.toString()}`) ?? [];
 
-  console.log('Total propiedades obtenidas:', propiedades.length);
-  console.log('Filtros aplicados:', filtros);
-  
-  // Log detallado de la primera propiedad para ver la estructura
-  if (propiedades.length > 0) {
-    console.log('Estructura ACF de la primera propiedad:', JSON.stringify(propiedades[0].acf, null, 2));
-  }
-
   // Filtrar del lado del cliente por tipo_operacion
   if (filtros.tipo_operacion) {
     const tipoOperacionBuscado = filtros.tipo_operacion.toLowerCase();
-    console.log('Filtrando por tipo_operacion:', tipoOperacionBuscado);
-    
-    const antes = propiedades.length;
     propiedades = propiedades.filter(prop => {
-      // Verificar múltiples rutas donde puede estar el campo
       const valor = prop.acf?.tipo_operacion 
                  || prop.meta?.tipo_operacion 
                  || prop.tipo_operacion;
-      
       const tipoOperacion = valor?.toString().toLowerCase();
-      console.log(`Propiedad "${prop.title?.rendered}" - tipo_operacion en ACF: "${prop.acf?.tipo_operacion}", valor final: "${tipoOperacion}"`);
       return tipoOperacion === tipoOperacionBuscado;
     });
-    console.log(`Después del filtro tipo_operacion: ${antes} -> ${propiedades.length}`);
   }
 
   // Filtrar por tipo_propiedad

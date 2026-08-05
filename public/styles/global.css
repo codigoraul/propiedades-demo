@@ -31,8 +31,9 @@ img { display: block; max-width: 100%; }
   border-bottom: 1px solid var(--border);
 }
 .nav-logo {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.35rem; color: var(--dark); text-decoration: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.35rem; font-weight: 800; color: var(--dark); text-decoration: none;
+  letter-spacing: -.03em;
 }
 .nav-logo span { color: var(--gold); }
 

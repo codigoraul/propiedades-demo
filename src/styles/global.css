@@ -23,6 +23,9 @@
 
 html { scroll-behavior: smooth; }
 
+/* [hidden] debe ganar siempre — si no, display:flex/grid lo anula */
+[hidden] { display: none !important; }
+
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background: var(--light);

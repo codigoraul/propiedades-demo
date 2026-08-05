@@ -10,39 +10,89 @@ const imagen = acf.imagen_principal?.url ?? prop.thumbnail_url ?? 'https://place
 const precio = acf.tipo_operacion === 'arriendo'
   ? `${formatUF(acf.precio_arriendo_uf)}/mes`
   : formatUF(acf.precio_uf);
+
+// Datos para el buscador (filtrado en el navegador)
+const precioNum = Number(
+  acf.tipo_operacion === 'arriendo' ? acf.precio_arriendo_uf : acf.precio_uf
+) || 0;
+const buscable = [
+  titulo,
+  acf.ciudad,
+  acf.sector,
+  acf.region,
+  acf.direccion,
+  acf.tipo_propiedad,
+  acf.codigo_interno,
+].filter(Boolean).join(' ').toLowerCase();
+
+// Máximo 3 características para que la tarjeta no crezca de alto
+const ICO = {
+  dorm: 'M3 7v13h18V7M2 7h20M7 7V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3M6 7v13',
+  banos: 'M4 12h16v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM6 12V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v6M4 12h16M8 19v2M16 19v2',
+  m2: 'M3 3h18v18H3zM3 9h18M9 21V9',
+  est: 'M5 10l2-7h10l2 7M5 10h14v5H5z',
+};
+const specs = [
+  acf.dormitorios > 0        && { d: ICO.dorm,  v: acf.dormitorios,        u: 'dorm.' },
+  acf.banos > 0              && { d: ICO.banos, v: acf.banos,              u: 'baños' },
+  acf.metros_construidos > 0 && { d: ICO.m2,    v: acf.metros_construidos, u: 'm²'    },
+  acf.estacionamientos > 0   && { d: ICO.est,   v: acf.estacionamientos,   u: 'est.'  },
+].filter(Boolean).slice(0, 3);
 ---
 
-<article class="prop-card">
+<article
+  class="prop-card"
+  data-prop
+  data-operacion={acf.tipo_operacion ?? ''}
+  data-tipo={acf.tipo_propiedad ?? ''}
+  data-ciudad={acf.ciudad ?? ''}
+  data-precio={precioNum}
+  data-dorm={Number(acf.dormitorios) || 0}
+  data-banos={Number(acf.banos) || 0}
+  data-buscable={buscable}
+>
   <a href={`${base}/propiedades/${prop.slug}`} class="prop-img-link">
     <div class="prop-img">
       <img src={imagen} alt={titulo} loading="lazy" />
       <span class={`prop-badge ${acf.tipo_operacion}`}>
         {acf.tipo_operacion === 'venta' ? 'En Venta' : 'Arriendo'}
       </span>
+      {acf.tipo_propiedad && (
+        <span class="prop-tipo">{acf.tipo_propiedad.replace('_', ' ')}</span>
+      )}
     </div>
   </a>
 
   <div class="prop-body">
-    <div class="prop-precio">{precio}</div>
+    <div class="prop-precio" aria-label="Precio">{precio}</div>
     <h3 class="prop-titulo">
       <a href={`${base}/propiedades/${prop.slug}`}>{titulo}</a>
     </h3>
     <p class="prop-ubicacion">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
       {acf.sector ? `${acf.sector}, ` : ''}{acf.ciudad}
     </p>
 
-    <div class="prop-specs">
-      {acf.dormitorios > 0 && <span class="spec">{acf.dormitorios} dorm.</span>}
-      {acf.banos > 0 && <span class="spec">{acf.banos} baños</span>}
-      {acf.metros_construidos > 0 && <span class="spec">{acf.metros_construidos} m²</span>}
-      {acf.estacionamientos > 0 && <span class="spec">{acf.estacionamientos} est.</span>}
-    </div>
+    {specs.length > 0 && (
+      <ul class="prop-specs">
+        {specs.map(sp => (
+          <li class="spec">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d={sp.d} /></svg>
+            <span class="spec-v">{sp.v}</span>
+            <span class="spec-u">{sp.u}</span>
+          </li>
+        ))}
+      </ul>
+    )}
 
     <div class="prop-footer">
-      <a href={`${base}/propiedades/${prop.slug}`} class="btn-ver">Ver ficha</a>
+      <a href={`${base}/propiedades/${prop.slug}`} class="btn-ver">
+        Ver ficha
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+      </a>
       {acf.corredor_telefono && (
         <a href={whatsappLink(acf.corredor_telefono, titulo)} target="_blank" rel="noopener" class="btn-wp">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.521.074-.797.372-.275.298-1.052 1.028-1.052 2.509 0 1.481 1.079 2.91 1.229 3.108.149.198 2.13 3.249 5.154 4.557.719.31 1.28.497 1.718.637.722.23 1.378.198 1.894.124.578-.082 1.759-.72 2.007-1.416.249-.697.249-1.293.173-1.416-.074-.124-.272-.198-.57-.347m-5.614 5.859c-3.042 0-5.614-1.026-7.486-2.779l-.534-.478-.551.143-1.688.437.437-1.639.143-.551-.478-.534C2.18 16.3 1.154 13.728 1.154 10.686 1.154 5.348 5.47 1.032 10.808 1.032c5.337 0 9.653 4.316 9.653 9.654 0 5.338-4.316 9.654-9.653 9.654z"/></svg>
           WhatsApp
         </a>
       )}
@@ -54,71 +104,116 @@ const precio = acf.tipo_operacion === 'arriendo'
 .prop-card {
   background: #fff;
   border: 1px solid #E8E3DD;
-  transition: transform .3s, box-shadow .3s;
+  transition: transform .45s cubic-bezier(.22,1,.36,1), box-shadow .45s cubic-bezier(.22,1,.36,1), border-color .45s;
   overflow: hidden;
 }
 .prop-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 35px rgba(28,28,30,.1);
-  border-color: #B87333;
+  transform: translateY(-6px);
+  box-shadow: 0 24px 50px rgba(28,28,30,.09);
+  border-color: #C6A55C;
 }
 .prop-img-link { display: block; }
 .prop-img {
   position: relative; aspect-ratio: 4/3; overflow: hidden;
 }
+.prop-img::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(28,28,30,.45), transparent 55%);
+  opacity: 0;
+  transition: opacity .4s;
+}
+.prop-card:hover .prop-img::after { opacity: 1; }
 .prop-img img {
   width: 100%; height: 100%; object-fit: cover;
-  transition: transform .5s;
+  transition: transform .7s cubic-bezier(.22,1,.36,1);
 }
-.prop-card:hover .prop-img img { transform: scale(1.04); }
+.prop-card:hover .prop-img img { transform: scale(1.05); }
 
 .prop-badge {
-  position: absolute; top: .8rem; left: .8rem;
-  padding: .3rem .75rem;
-  font-size: .68rem; font-weight: 700;
-  letter-spacing: .07em; text-transform: uppercase;
+  position: absolute; top: .9rem; left: .9rem;
+  padding: .35rem .85rem;
+  font-size: .65rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
 }
-.prop-badge.venta    { background: #B87333; color: #fff; }
-.prop-badge.arriendo { background: #1C1C1E; color: #F2EDE8; }
-.prop-badge.arriendo_temp { background: #4A6741; color: #fff; }
+.prop-badge {
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+}
+.prop-badge.venta    { background: rgba(198,165,92,.82); color: #fff; }
+.prop-badge.arriendo { background: rgba(28,28,30,.72); color: #F2EDE8; }
+.prop-badge.arriendo_temp { background: rgba(74,103,65,.78); color: #fff; }
 
-.prop-body { padding: 1.3rem; }
+.prop-body { padding: 1.15rem 1.2rem 1.2rem; }
 .prop-precio {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.25rem; font-weight: 700; color: #1C1C1E;
-  margin-bottom: .3rem;
+  font-size: 1.15rem; font-weight: 800;
+  color: #C6A55C; margin-bottom: .35rem;
+  letter-spacing: -.01em;
 }
 .prop-titulo {
-  font-size: .95rem; font-weight: 500;
-  margin-bottom: .35rem; line-height: 1.4;
+  font-size: 1.05rem; font-weight: 700;
+  margin-bottom: .55rem; line-height: 1.32;
+  letter-spacing: -.01em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.7em;
 }
 .prop-titulo a { color: #1C1C1E; text-decoration: none; }
 .prop-titulo a:hover { color: #B87333; }
 
-.prop-ubicacion {
-  display: flex; align-items: center; gap: .35rem;
-  font-size: .78rem; color: #7A7269; margin-bottom: 1rem;
+.prop-tipo {
+  position: absolute; top: .9rem; right: .9rem; z-index: 3;
+  padding: .35rem .8rem;
+  font-size: .62rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: #1C1C1E;
+  background: rgba(255,255,255,.55);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: 0 4px 14px rgba(0,0,0,.10);
 }
-.prop-ubicacion svg { flex-shrink: 0; opacity: .6; }
+
+.prop-ubicacion {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .8rem; color: #7A7269; margin-bottom: .85rem;
+}
+.prop-ubicacion svg { flex-shrink: 0; color: #C6A55C; }
 
 .prop-specs {
-  display: flex; flex-wrap: wrap; gap: .5rem;
-  padding: .9rem 0; border-top: 1px solid #EDE8E2;
-  margin-bottom: .9rem;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #EDE8E2;
+  border-top: 1px solid #EDE8E2;
+  border-bottom: 1px solid #EDE8E2;
+  padding: 0;
+  margin: 0 0 .9rem;
 }
 .spec {
-  font-size: .75rem; color: #7A7269;
-  background: #F5F2EE; padding: .25rem .6rem;
+  display: flex; flex-direction: row; align-items: center;
+  justify-content: center; gap: .28rem;
+  background: #fff;
+  padding: .42rem .2rem;
+  min-width: 0; white-space: nowrap;
 }
+.spec svg { width: 13px; height: 13px; flex-shrink: 0; color: #C6A55C; }
+.spec-v { font-size: .78rem; font-weight: 700; color: #1C1C1E; line-height: 1; }
+.spec-u { font-size: .68rem; color: #9A958D; line-height: 1; }
 
 .prop-footer { display: flex; gap: .6rem; }
 .btn-ver, .btn-wp {
-  flex: 1; text-align: center;
-  padding: .6rem .5rem; font-size: .78rem; font-weight: 600;
-  text-decoration: none; transition: all .2s; letter-spacing: .03em;
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  text-align: center;
+  padding: .7rem .6rem; font-size: .76rem; font-weight: 700;
+  text-decoration: none; transition: all .25s; letter-spacing: .04em;
 }
 .btn-ver { background: #1C1C1E; color: #F2EDE8; }
-.btn-ver:hover { background: #B87333; }
+.btn-ver:hover { background: #C6A55C; color: #1C1C1E; }
 .btn-wp { border: 1px solid #D9D2C8; color: #1C1C1E; }
 .btn-wp:hover { border-color: #25D366; background: #25D366; color: #fff; }
 </style>
